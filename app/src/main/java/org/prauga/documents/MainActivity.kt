@@ -29,7 +29,6 @@ class MainActivity : PvotBaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val preferences = AppPreferences(applicationContext)
         incomingUri = incomingDocumentUri(intent)
         setPvotContent {
             val uiState by viewModel.state.collectAsStateWithLifecycle()
@@ -37,19 +36,13 @@ class MainActivity : PvotBaseActivity() {
             PvotAppTheme(dynamicColor = settings.dynamicColor) {
                 ProvidePvotGlassIntensity(settings.glassIntensity) {
                     if (settings.onboardingComplete) {
-                        AppShell(preferences, gridView = settings.gridView)
+                        AppShell()
                     } else {
-                        OnboardingScreen(
-                            preferences = preferences,
-                            onContinue = { viewModel.onEvent(MainEvent.CompleteOnboarding) }
-                        )
+                        OnboardingScreen()
                     }
                     incomingUri?.let { uri ->
                         IncomingDocumentHandler(
                             uri = uri,
-                            preferences = preferences,
-                            autosave = settings.autosaveOpenedDocuments,
-                            onAutosaveChosen = { viewModel.onEvent(MainEvent.AutosaveOpenedDocuments(it)) },
                             onHandled = { incomingUri = null }
                         )
                     }

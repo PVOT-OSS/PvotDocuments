@@ -8,10 +8,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -19,40 +16,30 @@ import com.prauga.pvot.designsystem.components.PvotBottomSheet
 import com.prauga.pvot.designsystem.components.button.PvotIconButton
 import com.prauga.pvot.designsystem.components.list.PvotListRow
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.launch
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
 import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
-import org.prauga.documents.library.data.DocumentsRepository
 import org.prauga.documents.library.data.TrashedDocument
 
 /**
  * Documents moved out of their folder by the trash button in Manage. Restoring writes a copy back
  * into the original folder, which only works while that folder is still one the user has added;
  * deleting here is for good, with no further undo.
- *
- * @param onRestored Called after a successful restore, so Manage re-reads its folders
- * @param onMessage Shows a brief message, such as why a restore failed
  */
 @Composable
 fun RecentlyDeletedSheet(
-    preferences: AppPreferences,
+    documents: List<TrashedDocument>,
     onDismiss: () -> Unit,
-    onRestored: () -> Unit,
-    onMessage: (String) -> Unit
+    onRestore: (TrashedDocument) -> Unit,
+    onDeleteForever: (TrashedDocument) -> Unit,
 ) {
-    val context = LocalContext.current
-    val repository = remember { DocumentsRepository(context) }
-    val scope = rememberCoroutineScope()
-    val restoreFailedMessage = stringResource(R.string.trash_restore_failed)
 
     PvotBottomSheet(
         visible = true,
         onDismissRequest = onDismiss,
         title = stringResource(R.string.manage_recently_deleted_title)
     ) {
-        if (preferences.trashedDocuments.isEmpty()) {
+        if (documents.isEmpty()) {
             Text(
                 text = stringResource(R.string.trash_empty),
                 style = MaterialTheme.typography.bodyMedium,
@@ -61,7 +48,7 @@ fun RecentlyDeletedSheet(
             )
             return@PvotBottomSheet
         }
-        preferences.trashedDocuments.forEach { trashed ->
+        documents.forEach { trashed ->
             val document = trashed.document
             PvotListRow(
                 title = document.name,
@@ -81,20 +68,7 @@ fun RecentlyDeletedSheet(
                                 R.string.trash_restore_document,
                                 document.name
                             ),
-                            onClick = {
-                                scope.launch {
-                                    val restored = repository.restoreFromTrash(
-                                        document,
-                                        trashed.folderTreeUri
-                                    )
-                                    if (restored) {
-                                        preferences.removeTrashedDocument(trashed)
-                                        onRestored()
-                                    } else {
-                                        onMessage(restoreFailedMessage)
-                                    }
-                                }
-                            },
+                            onClick = { onRestore(trashed) },
                             size = 36.dp
                         )
                         PvotIconButton(
@@ -103,12 +77,7 @@ fun RecentlyDeletedSheet(
                                 R.string.trash_delete_forever,
                                 document.name
                             ),
-                            onClick = {
-                                scope.launch {
-                                    repository.deleteForever(document)
-                                    preferences.removeTrashedDocument(trashed)
-                                }
-                            },
+                            onClick = { onDeleteForever(trashed) },
                             size = 36.dp
                         )
                     }

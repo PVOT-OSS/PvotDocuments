@@ -11,15 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.components.PvotScreen
 import com.prauga.pvot.designsystem.components.PvotScreenDefaults
 import com.prauga.pvot.designsystem.components.button.PvotIconButton
@@ -27,54 +26,51 @@ import com.prauga.pvot.designsystem.components.list.PvotListGroup
 import com.prauga.pvot.designsystem.components.list.PvotListRow
 import com.prauga.pvot.designsystem.motion.pvotReveal
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
-import org.prauga.documents.common.DocumentKind
-import org.prauga.documents.common.OpenResult
+import org.prauga.documents.common.DocumentEffects
 import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
-import org.prauga.documents.common.openDocument
-import org.prauga.documents.common.shareDocument
 import org.prauga.documents.tools.EmptyTab
 
 /**
  * Documents the app was opened or shared with, most recent first, filterable by type — see
  * [org.prauga.documents.incoming.IncomingDocumentHandler]. Tapping one opens it if its format
- * has a viewer yet; [onUnsupported] reports when it doesn't.
+ * has a viewer; [onMessage] reports when it doesn't.
  */
 @Composable
 fun RecentScreen(
-    preferences: AppPreferences,
     state: LazyListState,
     topPadding: Dp,
-    onUnsupported: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onMessage: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: RecentViewModel = hiltViewModel(),
 ) {
-    val documents = preferences.recentDocuments
-    if (documents.isEmpty()) {
+    DocumentEffects(viewModel.effects, onMessage)
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val recent = (uiState as? UiState.Success)?.data ?: return
+    if (recent.documents.isEmpty()) {
         EmptyTab(state, topPadding, R.drawable.ic_recent, stringResource(R.string.recent_empty), modifier)
         return
     }
+    RecentContent(recent, viewModel::onEvent, state, topPadding, modifier)
+}
 
-    val context = LocalContext.current
-    val openUnsupportedMessage = stringResource(R.string.manage_open_unsupported)
-    val unavailableMessage = stringResource(R.string.recent_unavailable)
-
-    // Only the kinds actually present get a chip, so "All" is never alone on the row.
-    val kindsPresent = remember(documents) {
-        documents.map { documentKind(it.name, it.mimeType) }.distinct()
-    }
-    var selectedKind by remember { mutableStateOf<DocumentKind?>(null) }
-    val visibleDocuments = selectedKind?.let { kind ->
-        documents.filter { documentKind(it.name, it.mimeType) == kind }
-    } ?: documents
-
+@Composable
+private fun RecentContent(
+    recent: RecentUiState,
+    onEvent: (RecentEvent) -> Unit,
+    state: LazyListState,
+    topPadding: Dp,
+    modifier: Modifier,
+) {
+    val selectedKind = recent.selectedKind
+    val visibleDocuments = recent.visibleDocuments
     PvotScreen(
         modifier = modifier,
         state = state,
         contentPadding = PvotScreenDefaults.contentPadding(top = topPadding)
     ) {
-        if (kindsPresent.size > 1) {
+        if (recent.kinds.size > 1) {
             item {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth().pvotReveal(0),
@@ -83,15 +79,15 @@ fun RecentScreen(
                     item {
                         FilterChip(
                             selected = selectedKind == null,
-                            onClick = { selectedKind = null },
+                            onClick = { onEvent(RecentEvent.Filter(null)) },
                             label = { Text(stringResource(R.string.recent_filter_all)) }
                         )
                     }
-                    items(kindsPresent) { kind ->
+                    items(recent.kinds) { kind ->
                         FilterChip(
                             selected = selectedKind == kind,
                             onClick = {
-                                selectedKind = if (selectedKind == kind) null else kind
+                                onEvent(RecentEvent.Filter(if (selectedKind == kind) null else kind))
                             },
                             label = { Text(stringResource(kind.labelRes)) }
                         )
@@ -133,20 +129,11 @@ fun RecentScreen(
                                             R.string.manage_share_document,
                                             document.name
                                         ),
-                                        onClick = { shareDocument(context, document) },
+                                        onClick = { onEvent(RecentEvent.Share(document)) },
                                         size = 36.dp
                                     )
                                 },
-                                onClick = {
-                                    when (openDocument(context, preferences, document)) {
-                                        OpenResult.Opened -> Unit
-                                        OpenResult.Unsupported -> onUnsupported(openUnsupportedMessage)
-                                        OpenResult.Unreadable -> {
-                                            preferences.removeRecentDocument(document)
-                                            onUnsupported(unavailableMessage)
-                                        }
-                                    }
-                                }
+                                onClick = { onEvent(RecentEvent.Open(document)) }
                             )
                         }
                     }

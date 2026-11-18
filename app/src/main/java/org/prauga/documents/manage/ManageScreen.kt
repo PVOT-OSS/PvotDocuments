@@ -18,16 +18,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -35,7 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.PvotEmptyContent
+import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.components.PvotBottomSheet
 import com.prauga.pvot.designsystem.components.PvotCard
 import com.prauga.pvot.designsystem.components.PvotCardDefaults
@@ -54,155 +54,65 @@ import com.prauga.pvot.designsystem.components.textfield.PvotTextField
 import com.prauga.pvot.designsystem.motion.pvotReveal
 import com.prauga.pvot.designsystem.navigation.LocalPvotNavBarSizes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.launch
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
+import org.prauga.documents.common.DocumentEffects
 import org.prauga.documents.common.DocumentSort
-import org.prauga.documents.common.OpenResult
 import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
-import org.prauga.documents.common.shareDocument
-import org.prauga.documents.common.shareDocuments
-import org.prauga.documents.common.sortedByDocument
-import org.prauga.documents.library.data.DocumentEntry
-import org.prauga.documents.library.data.DocumentsRepository
-import org.prauga.documents.library.data.FolderEntry
 import org.prauga.documents.library.data.ManagedDocument
-import org.prauga.documents.library.data.TrashedDocument
 
 /**
  * Folders the user added, and the documents found directly inside them. Tapping one opens it if
- * its format has a viewer yet; [onUnsupported] reports when it doesn't.
+ * its format has a viewer; [onMessage] reports when it doesn't, and the outcome of other actions.
  */
 @Composable
 fun ManageScreen(
-    preferences: AppPreferences,
-    gridView: Boolean,
     state: LazyListState,
     topPadding: Dp,
-    onUnsupported: (String) -> Unit,
-    modifier: Modifier = Modifier
+    onMessage: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: ManageViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
-    val repository = remember { DocumentsRepository(context) }
-    val scope = rememberCoroutineScope()
-    var folders by remember { mutableStateOf<List<FolderEntry>>(emptyList()) }
-    var documents by remember { mutableStateOf<List<ManagedDocument>>(emptyList()) }
-    var refreshToken by remember { mutableIntStateOf(0) }
+    DocumentEffects(viewModel.effects, onMessage)
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val manage = (uiState as? UiState.Success)?.data ?: return
+    ManageContent(manage, viewModel::onEvent, onMessage, state, topPadding, modifier)
+}
+
+@Composable
+private fun ManageContent(
+    manage: ManageUiState,
+    onEvent: (ManageEvent) -> Unit,
+    onMessage: (String) -> Unit,
+    state: LazyListState,
+    topPadding: Dp,
+    modifier: Modifier,
+) {
     var showTrash by remember { mutableStateOf(false) }
     var actionsFor by remember { mutableStateOf<ManagedDocument?>(null) }
     var renaming by remember { mutableStateOf<ManagedDocument?>(null) }
-    var searchQuery by remember { mutableStateOf("") }
-    var sortOption by remember { mutableStateOf(DocumentSort.Name) }
-    var selectedUris by remember { mutableStateOf<Set<Uri>>(emptySet()) }
+    var searchQuery by rememberSaveable { mutableStateOf(manage.searchQuery) }
     var showNewSheet by remember { mutableStateOf(false) }
     var creatingType by remember { mutableStateOf<NewFileType?>(null) }
-    val openUnsupportedMessage = stringResource(R.string.manage_open_unsupported)
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-    val movedToTrashMessage = stringResource(R.string.manage_moved_to_trash)
-    val deleteFailedMessage = stringResource(R.string.manage_delete_failed)
-    val renameFailedMessage = stringResource(R.string.manage_rename_failed)
     val scanUnsupportedMessage = stringResource(R.string.manage_scan_unsupported)
-    val createdMessage = stringResource(R.string.manage_new_created)
-    val createFailedMessage = stringResource(R.string.manage_new_create_failed)
     val untitledName = stringResource(R.string.manage_new_untitled)
-
-    fun openDocument(document: DocumentEntry) {
-        when (org.prauga.documents.common.openDocument(context, preferences, document)) {
-            OpenResult.Opened -> Unit
-            OpenResult.Unsupported -> onUnsupported(openUnsupportedMessage)
-            OpenResult.Unreadable -> onUnsupported(readFailedMessage)
-        }
-    }
-
-    fun delete(managed: ManagedDocument) {
-        scope.launch {
-            val trashed = repository.moveToTrash(managed.document)
-            if (trashed != null) {
-                preferences.addTrashedDocument(
-                    TrashedDocument(
-                        document = trashed,
-                        folderTreeUri = managed.folderTreeUri,
-                        deletedAt = System.currentTimeMillis()
-                    )
-                )
-                refreshToken++
-                onUnsupported(movedToTrashMessage)
-            } else {
-                onUnsupported(deleteFailedMessage)
-            }
-        }
-    }
-
-    fun toggleSelection(uri: Uri) {
-        selectedUris = if (uri in selectedUris) selectedUris - uri else selectedUris + uri
-    }
-
-    fun deleteSelected(selected: List<ManagedDocument>) {
-        scope.launch {
-            var failures = 0
-            selected.forEach { managed ->
-                val trashed = repository.moveToTrash(managed.document)
-                if (trashed != null) {
-                    preferences.addTrashedDocument(
-                        TrashedDocument(
-                            document = trashed,
-                            folderTreeUri = managed.folderTreeUri,
-                            deletedAt = System.currentTimeMillis()
-                        )
-                    )
-                } else {
-                    failures++
-                }
-            }
-            selectedUris = emptySet()
-            refreshToken++
-            onUnsupported(if (failures == 0) movedToTrashMessage else deleteFailedMessage)
-        }
-    }
-
-    fun createDocument(type: NewFileType, name: String) {
-        val folderUri = folders.first().treeUri
-        scope.launch {
-            val created = repository.createTextDocument(
-                folderUri,
-                name.ifBlank { untitledName },
-                type.extension,
-                type.mimeType
-            )
-            creatingType = null
-            if (created != null) {
-                refreshToken++
-                onUnsupported(createdMessage)
-            } else {
-                onUnsupported(createFailedMessage)
-            }
-        }
-    }
+    val folders = manage.folders
+    val documents = manage.documents
+    val selectedUris = manage.selectedUris
+    val visibleDocuments = manage.visibleDocuments
 
     val pickFolder = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
-        if (uri != null) preferences.addFolder(uri, context.contentResolver)
-    }
-
-    // Re-reads every added folder whenever the set changes, or refreshToken is bumped after a
-    // delete; each folder is a handful of files, so re-listing is simpler than patching the list
-    // in place and still fast enough to feel instant.
-    LaunchedEffect(preferences.folderUris, refreshToken) {
-        val uris = preferences.folderUris.map(Uri::parse)
-        folders = uris.mapNotNull { repository.folder(it) }
-        documents = folders.flatMap { folder ->
-            repository.documentsIn(folder.treeUri).map { ManagedDocument(it, folder.treeUri) }
-        }
+        if (uri != null) onEvent(ManageEvent.AddFolder(uri))
     }
 
     if (showTrash) {
         RecentlyDeletedSheet(
-            preferences = preferences,
+            documents = manage.trashedDocuments,
             onDismiss = { showTrash = false },
-            onRestored = { refreshToken++ },
-            onMessage = onUnsupported
+            onRestore = { onEvent(ManageEvent.Restore(it)) },
+            onDeleteForever = { onEvent(ManageEvent.DeleteForever(it)) },
         )
     }
 
@@ -210,10 +120,10 @@ fun ManageScreen(
         DocumentActionsSheet(
             document = managed.document,
             onDismiss = { actionsFor = null },
-            onShare = { shareDocument(context, managed.document) },
+            onShare = { onEvent(ManageEvent.Share(managed)) },
             onRename = { renaming = managed },
-            onSelect = { selectedUris = setOf(managed.document.uri) },
-            onDelete = { delete(managed) }
+            onSelect = { onEvent(ManageEvent.SelectOnly(managed.document.uri)) },
+            onDelete = { onEvent(ManageEvent.Delete(managed)) }
         )
     }
 
@@ -241,11 +151,8 @@ fun ManageScreen(
                 style = PvotDialogActionStyle.Primary,
                 enabled = newName.isNotBlank(),
                 onClick = {
-                    scope.launch {
-                        val renamed = repository.renameDocument(managed.document, newName.trim())
-                        renaming = null
-                        if (renamed) refreshToken++ else onUnsupported(renameFailedMessage)
-                    }
+                    onEvent(ManageEvent.Rename(managed, newName.trim()))
+                    renaming = null
                 }
             )
         }
@@ -255,7 +162,7 @@ fun ManageScreen(
         NewDocumentSheet(
             onDismiss = { showNewSheet = false },
             onPickType = { type -> creatingType = type },
-            onScan = { onUnsupported(scanUnsupportedMessage) }
+            onScan = { onMessage(scanUnsupportedMessage) }
         )
     }
 
@@ -282,14 +189,13 @@ fun ManageScreen(
             PvotDialogAction(
                 label = stringResource(R.string.manage_new_create),
                 style = PvotDialogActionStyle.Primary,
-                onClick = { createDocument(type, name.trim()) }
+                onClick = {
+                    onEvent(ManageEvent.Create(type, name.trim().ifBlank { untitledName }))
+                    creatingType = null
+                }
             )
         }
     }
-
-    val visibleDocuments = documents
-        .filter { it.document.name.contains(searchQuery, ignoreCase = true) }
-        .sortedByDocument(sortOption) { it.document }
 
     if (folders.isEmpty()) {
         PvotScreen(
@@ -323,21 +229,10 @@ fun ManageScreen(
             item {
                 SelectionToolbar(
                     count = selectedUris.size,
-                    onSelectAll = {
-                        selectedUris = visibleDocuments.map { it.document.uri }.toSet()
-                    },
-                    onShare = {
-                        shareDocuments(
-                            context,
-                            visibleDocuments
-                                .filter { it.document.uri in selectedUris }
-                                .map { it.document }
-                        )
-                    },
-                    onDelete = {
-                        deleteSelected(visibleDocuments.filter { it.document.uri in selectedUris })
-                    },
-                    onCancel = { selectedUris = emptySet() },
+                    onSelectAll = { onEvent(ManageEvent.SelectAll) },
+                    onShare = { onEvent(ManageEvent.ShareSelected) },
+                    onDelete = { onEvent(ManageEvent.DeleteSelected) },
+                    onCancel = { onEvent(ManageEvent.ClearSelection) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -364,12 +259,7 @@ fun ManageScreen(
                                         R.string.manage_remove_folder,
                                         folder.displayName
                                     ),
-                                    onClick = {
-                                        preferences.removeFolder(
-                                            folder.treeUri,
-                                            context.contentResolver
-                                        )
-                                    },
+                                    onClick = { onEvent(ManageEvent.RemoveFolder(folder.treeUri)) },
                                     size = 36.dp
                                 )
                             }
@@ -392,7 +282,7 @@ fun ManageScreen(
                     PvotListRow(
                         title = stringResource(
                             R.string.manage_recently_deleted,
-                            preferences.trashedDocuments.size
+                            manage.trashedDocuments.size
                         ),
                         leading = {
                             Icon(painterResource(R.drawable.ic_trash), contentDescription = null)
@@ -406,7 +296,10 @@ fun ManageScreen(
             item {
                 PvotTextField(
                     value = searchQuery,
-                    onValueChange = { searchQuery = it },
+                    onValueChange = {
+                        searchQuery = it
+                        onEvent(ManageEvent.Search(it))
+                    },
                     placeholder = stringResource(R.string.manage_search_placeholder),
                     leadingIcon = {
                         Icon(painterResource(R.drawable.ic_search), contentDescription = null)
@@ -416,7 +309,10 @@ fun ManageScreen(
                             PvotIconButton(
                                 icon = painterResource(R.drawable.ic_x),
                                 contentDescription = stringResource(R.string.manage_search_clear),
-                                onClick = { searchQuery = "" },
+                                onClick = {
+                                    searchQuery = ""
+                                    onEvent(ManageEvent.Search(""))
+                                },
                                 size = 28.dp
                             )
                         }
@@ -434,8 +330,8 @@ fun ManageScreen(
                         stringResource(R.string.manage_sort_date),
                         stringResource(R.string.manage_sort_size)
                     ),
-                    selectedIndex = sortOption.ordinal,
-                    onSelect = { sortOption = DocumentSort.entries[it] },
+                    selectedIndex = manage.sort.ordinal,
+                    onSelect = { onEvent(ManageEvent.Sort(DocumentSort.entries[it])) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = PvotSpacing.S)
@@ -444,7 +340,7 @@ fun ManageScreen(
             }
         }
         if (visibleDocuments.isNotEmpty()) {
-            if (gridView) {
+            if (manage.gridView) {
                 item {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth().pvotReveal(3),
@@ -459,9 +355,9 @@ fun ManageScreen(
                                 inSelectionMode = selectedUris.isNotEmpty(),
                                 onClick = {
                                     if (selectedUris.isNotEmpty()) {
-                                        toggleSelection(managed.document.uri)
+                                        onEvent(ManageEvent.ToggleSelection(managed.document.uri))
                                     } else {
-                                        openDocument(managed.document)
+                                        onEvent(ManageEvent.Open(managed))
                                     }
                                 },
                                 onMore = { actionsFor = managed }
@@ -517,12 +413,12 @@ fun ManageScreen(
                                     },
                                     onClick = {
                                         if (selectedUris.isNotEmpty()) {
-                                            toggleSelection(document.uri)
+                                            onEvent(ManageEvent.ToggleSelection(document.uri))
                                         } else {
-                                            openDocument(document)
+                                            onEvent(ManageEvent.Open(managed))
                                         }
                                     },
-                                    onLongClick = { toggleSelection(document.uri) }
+                                    onLongClick = { onEvent(ManageEvent.ToggleSelection(document.uri)) }
                                 )
                             }
                         }
@@ -560,18 +456,6 @@ fun ManageScreen(
     }
 }
 
-/**
- * A plain-text format the "+" can create directly — a real DOCX/XLSX/PPTX writer is Phase 3/4
- * work, so the choices here are honest about what Phase 1 can actually produce empty.
- */
-private data class NewFileType(val extension: String, val mimeType: String, val titleRes: Int)
-
-private val NewFileTypes = listOf(
-    NewFileType("txt", "text/plain", R.string.manage_new_text),
-    NewFileType("md", "text/markdown", R.string.manage_new_markdown),
-    NewFileType("csv", "text/csv", R.string.manage_new_csv)
-)
-
 /** The "+" menu: a plain-text format to create now, or scanning, which isn't built until Phase 5. */
 @Composable
 private fun NewDocumentSheet(
@@ -584,7 +468,7 @@ private fun NewDocumentSheet(
         onDismissRequest = onDismiss,
         title = stringResource(R.string.manage_new_document)
     ) {
-        NewFileTypes.forEach { type ->
+        NewFileType.entries.forEach { type ->
             PvotSheetItem(
                 title = stringResource(type.titleRes),
                 icon = {

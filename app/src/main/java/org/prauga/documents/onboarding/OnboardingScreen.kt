@@ -21,19 +21,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.designsystem.components.PvotCard
 import com.prauga.pvot.designsystem.components.button.PvotButton
 import com.prauga.pvot.designsystem.components.button.PvotButtonStyle
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
 
 
@@ -47,9 +44,18 @@ import org.prauga.documents.R
  */
 @Composable
 fun OnboardingScreen(
-    preferences: AppPreferences,
-    onContinue: () -> Unit,
     modifier: Modifier = Modifier,
+    viewModel: OnboardingViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    OnboardingContent(uiState, viewModel::onEvent, modifier)
+}
+
+@Composable
+private fun OnboardingContent(
+    uiState: OnboardingUiState,
+    onEvent: (OnboardingEvent) -> Unit,
+    modifier: Modifier,
 ) {
     LazyColumn(
         modifier = modifier
@@ -80,8 +86,9 @@ fun OnboardingScreen(
         }
         item {
             FolderOptionCard(
-                preferences = preferences,
                 folder = PublicFolder.Documents,
+                added = PublicFolder.Documents in uiState.addedFolders,
+                onPicked = { onEvent(OnboardingEvent.AddFolder(PublicFolder.Documents, it)) },
                 titleRes = R.string.onboarding_documents_title,
                 subtitleRes = R.string.onboarding_documents_subtitle,
                 iconRes = R.drawable.ic_file_text
@@ -89,8 +96,9 @@ fun OnboardingScreen(
         }
         item {
             FolderOptionCard(
-                preferences = preferences,
                 folder = PublicFolder.Downloads,
+                added = PublicFolder.Downloads in uiState.addedFolders,
+                onPicked = { onEvent(OnboardingEvent.AddFolder(PublicFolder.Downloads, it)) },
                 titleRes = R.string.onboarding_downloads_title,
                 subtitleRes = R.string.onboarding_downloads_subtitle,
                 iconRes = R.drawable.ic_download
@@ -99,7 +107,7 @@ fun OnboardingScreen(
         item {
             PvotButton(
                 text = stringResource(R.string.onboarding_continue),
-                onClick = onContinue,
+                onClick = { onEvent(OnboardingEvent.Continue) },
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -108,23 +116,17 @@ fun OnboardingScreen(
 
 @Composable
 private fun FolderOptionCard(
-    preferences: AppPreferences,
     folder: PublicFolder,
+    added: Boolean,
+    onPicked: (Uri) -> Unit,
     titleRes: Int,
     subtitleRes: Int,
     iconRes: Int
 ) {
-    val context = LocalContext.current
-    var added by remember {
-        mutableStateOf(isPublicFolderAdded(preferences.folderUris, folder))
-    }
     val pickFolder = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
-        if (uri != null) {
-            preferences.addFolder(uri, context.contentResolver)
-            added = true
-        }
+        if (uri != null) onPicked(uri)
     }
 
     PvotCard(modifier = Modifier.fillMaxWidth()) {

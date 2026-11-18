@@ -3,31 +3,41 @@ package org.prauga.documents.library.data
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
+import androidx.core.content.FileProvider
 import androidx.documentfile.provider.DocumentFile
-import kotlinx.coroutines.Dispatchers
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.prauga.documents.BuildConfig
+import org.prauga.documents.common.coroutines.IoDispatcher
 import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Reads folders and documents through the Storage Access Framework. Every call is a live query
  * against the provider, not a cache: a tree the user already granted still needs its own read on
  * every call, which is why each one is a suspend function off the main thread.
  */
-class DocumentsRepository(private val context: Context) {
+@Singleton
+class DocumentsRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @IoDispatcher private val io: CoroutineDispatcher,
+) {
 
     /** [treeUri] as a [FolderEntry], or null if it can no longer be opened (such as a removed SD
      * card or a folder the user revoked access to outside the app). */
-    suspend fun folder(treeUri: Uri): FolderEntry? = withContext(Dispatchers.IO) {
+    suspend fun folder(treeUri: Uri): FolderEntry? = withContext(io) {
         val tree = DocumentFile.fromTreeUri(context, treeUri) ?: return@withContext null
         if (!tree.exists()) return@withContext null
         FolderEntry(treeUri = treeUri, displayName = tree.name ?: treeUri.lastPathSegment.orEmpty())
     }
 
     /** The files directly inside [treeUri], not its subfolders; phase 1 is one level deep. */
-    suspend fun documentsIn(treeUri: Uri): List<DocumentEntry> = withContext(Dispatchers.IO) {
+    suspend fun documentsIn(treeUri: Uri): List<DocumentEntry> = withContext(io) {
         val tree = DocumentFile.fromTreeUri(context, treeUri) ?: return@withContext emptyList()
         tree.listFiles()
             .filter { it.isFile }
@@ -46,7 +56,7 @@ class DocumentsRepository(private val context: Context) {
      * [uri]'s content, decoded as UTF-8 text. Throws if the document can't be read or isn't
      * actually text — the viewer turns that into [com.prauga.pvot.coreui.UiState.Error].
      */
-    suspend fun readText(uri: Uri): String = withContext(Dispatchers.IO) {
+    suspend fun readText(uri: Uri): String = withContext(io) {
         val stream = context.contentResolver.openInputStream(uri)
             ?: error("This document can't be opened right now.")
         stream.use { it.readBytes().toString(Charsets.UTF_8) }
@@ -57,7 +67,7 @@ class DocumentsRepository(private val context: Context) {
      * "Share". Null if it no longer resolves — a one-time grant from the sending app that has
      * since expired, for example.
      */
-    suspend fun documentInfo(uri: Uri): DocumentEntry? = withContext(Dispatchers.IO) {
+    suspend fun documentInfo(uri: Uri): DocumentEntry? = withContext(io) {
         val doc = runCatching { DocumentFile.fromSingleUri(context, uri) }.onFailure { Timber.w("Could not resolve a document: %s", it.javaClass.name) }.getOrNull()
             ?: return@withContext null
         if (!doc.exists()) return@withContext null
@@ -71,10 +81,31 @@ class DocumentsRepository(private val context: Context) {
     }
 
     /** Whether [uri]'s content can actually be opened for reading right now. */
-    suspend fun canRead(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+    suspend fun canRead(uri: Uri): Boolean = withContext(io) {
         runCatching { context.contentResolver.openInputStream(uri)?.use { true } ?: false }
             .onFailure { Timber.w("Could not open a document: %s", it.javaClass.name) }
             .getOrDefault(false)
+    }
+
+    /** [uri]'s MIME type as its provider reports it, or an empty string when it doesn't. */
+    suspend fun mimeType(uri: Uri): String = withContext(io) {
+        context.contentResolver.getType(uri).orEmpty()
+    }
+
+    /**
+     * [document]'s URI, safe to hand to another component (an intent, a viewer). A document from
+     * an added folder is already a `content://` URI the app holds a grant on; an autosaved copy is
+     * a plain `file://` one, which isn't safe to put in an Intent — [FileProvider] turns it into a
+     * `content://` URI scoped to just that file instead. Null for a `file://` URI outside the
+     * app's own storage, which it can neither read nor share without a storage permission.
+     */
+    suspend fun readableUri(document: DocumentEntry): Uri? = withContext(io) {
+        if (document.uri.scheme != "file") return@withContext document.uri
+        val file = File(document.uri.path ?: return@withContext null)
+        if (!isOwnFile(context, file)) return@withContext null
+        runCatching {
+            FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
+        }.onFailure { Timber.w("Could not share an own copy: %s", it.javaClass.name) }.getOrNull()
     }
 
     /**
@@ -104,7 +135,7 @@ class DocumentsRepository(private val context: Context) {
         uri: Uri,
         displayName: String,
         preferredUris: Collection<Uri>
-    ): DocumentEntry? = withContext(Dispatchers.IO) {
+    ): DocumentEntry? = withContext(io) {
         val safeName = safeFileName(displayName)
         val size = runCatching { DocumentFile.fromSingleUri(context, uri)?.length() }
             .getOrNull() ?: 0L
@@ -161,13 +192,13 @@ class DocumentsRepository(private val context: Context) {
      */
     suspend fun moveToTrash(document: DocumentEntry): DocumentEntry? {
         val copy = copyIntoOwnStorage(document.uri, document.name, TrashDirName) ?: return null
-        val originalDeleted = withContext(Dispatchers.IO) {
+        val originalDeleted = withContext(io) {
             runCatching { DocumentFile.fromSingleUri(context, document.uri)?.delete() }
                 .onFailure { Timber.w("Could not delete a document: %s", it.javaClass.name) }
                 .getOrDefault(false) == true
         }
         if (!originalDeleted) {
-            withContext(Dispatchers.IO) { deleteOwnCopy(copy.uri) }
+            withContext(io) { deleteOwnCopy(copy.uri) }
             return null
         }
         return copy
@@ -179,7 +210,7 @@ class DocumentsRepository(private val context: Context) {
      * or the write fails; the trash copy is left in place either way, so nothing is lost.
      */
     suspend fun restoreFromTrash(trashed: DocumentEntry, folderTreeUri: Uri): Boolean =
-        withContext(Dispatchers.IO) {
+        withContext(io) {
             val tree = DocumentFile.fromTreeUri(context, folderTreeUri) ?: return@withContext false
             val source = File(requireNotNull(trashed.uri.path))
             if (!source.exists()) return@withContext false
@@ -201,7 +232,7 @@ class DocumentsRepository(private val context: Context) {
 
     /** Deletes [trashed]'s copy for good. */
     suspend fun deleteForever(trashed: DocumentEntry) =
-        withContext(Dispatchers.IO) { deleteOwnCopy(trashed.uri) }
+        withContext(io) { deleteOwnCopy(trashed.uri) }
 
     /**
      * Renames [document] to [newName]. Some providers change a document's URI on rename rather
@@ -209,7 +240,7 @@ class DocumentsRepository(private val context: Context) {
      * instead of trying to track the new URI itself.
      */
     suspend fun renameDocument(document: DocumentEntry, newName: String): Boolean =
-        withContext(Dispatchers.IO) {
+        withContext(io) {
             runCatching {
                 DocumentsContract.renameDocument(
                     context.contentResolver,
@@ -229,7 +260,7 @@ class DocumentsRepository(private val context: Context) {
         name: String,
         extension: String,
         mimeType: String
-    ): DocumentEntry? = withContext(Dispatchers.IO) {
+    ): DocumentEntry? = withContext(io) {
         val tree = DocumentFile.fromTreeUri(context, folderTreeUri) ?: return@withContext null
         val fileName = if (name.endsWith(".$extension", ignoreCase = true)) {
             name
@@ -260,7 +291,7 @@ class DocumentsRepository(private val context: Context) {
         uri: Uri,
         displayName: String,
         baseDirName: String
-    ): DocumentEntry? = withContext(Dispatchers.IO) {
+    ): DocumentEntry? = withContext(io) {
         val safeName = safeFileName(displayName)
         val copyDir = File(
             File(context.filesDir, baseDirName),

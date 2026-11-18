@@ -57,7 +57,6 @@ import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
 import org.prauga.documents.common.ViewerFormat
 import org.prauga.documents.formats.csv.parseCsv
-import org.prauga.documents.library.data.DocumentsRepository
 import org.prauga.documents.viewer.pdf.DarkPageFilter
 import org.prauga.documents.viewer.pdf.GoToPageDialog
 import org.prauga.documents.viewer.pdf.PdfContentsSheet
@@ -230,15 +229,23 @@ fun DocumentViewerScreen(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            TextDocumentContent(uri = uri, format = format, topPadding = padding.calculateTopPadding())
+            TextDocumentContent(
+                uri = uri,
+                format = format,
+                readText = viewModel::readText,
+                topPadding = padding.calculateTopPadding()
+            )
         }
     }
 }
 
 @Composable
-private fun TextDocumentContent(uri: Uri, format: ViewerFormat, topPadding: Dp) {
-    val context = LocalContext.current
-    val repository = remember { DocumentsRepository(context) }
+private fun TextDocumentContent(
+    uri: Uri,
+    format: ViewerFormat,
+    readText: suspend (Uri) -> String,
+    topPadding: Dp,
+) {
     val scope = rememberCoroutineScope()
     var state by remember(uri) { mutableStateOf<UiState<String>>(UiState.Loading) }
     val readFailedMessage = stringResource(R.string.viewer_read_failed)
@@ -246,7 +253,7 @@ private fun TextDocumentContent(uri: Uri, format: ViewerFormat, topPadding: Dp) 
     suspend fun load() {
         state = UiState.Loading
         state = try {
-            val text = repository.readText(uri)
+            val text = readText(uri)
             UiState.Success(if (format == ViewerFormat.Json) prettyPrintJson(text) else text)
         } catch (e: CancellationException) {
             throw e

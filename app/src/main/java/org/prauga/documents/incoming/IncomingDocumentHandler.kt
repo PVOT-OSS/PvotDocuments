@@ -4,79 +4,42 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.designsystem.components.PvotDialog
 import com.prauga.pvot.designsystem.components.PvotDialogAction
 import com.prauga.pvot.designsystem.components.PvotDialogActionStyle
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
-import org.prauga.documents.common.openDocument
-import org.prauga.documents.common.viewerFormat
-import org.prauga.documents.library.data.DocumentsRepository
 import org.prauga.documents.viewer.DocumentViewerActivity
 
-/**
- * Handles a document the app was opened or shared with, from [MainActivity][org.prauga.documents.MainActivity].
- * The first time, asks once whether to copy it into Documents' own storage; after that the choice
- * is remembered (and changeable from Settings). Either way the document ends up in
- * [AppPreferences.recentDocuments], so it shows up on the Recent tab, and opens in the viewer. A
- * document the app can't read isn't recorded.
- */
+/** Handles [uri] through [IncomingDocumentViewModel]; [onHandled] runs once it is done. */
 @Composable
 fun IncomingDocumentHandler(
     uri: Uri,
-    preferences: AppPreferences,
-    autosave: Boolean?,
-    onAutosaveChosen: (Boolean) -> Unit,
     onHandled: () -> Unit,
+    viewModel: IncomingDocumentViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
-    val repository = remember { DocumentsRepository(context) }
-    val defaultName = stringResource(R.string.incoming_default_name)
-    var name by remember(uri) { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(uri) {
-        name = repository.documentInfo(uri)?.name
-            ?: uri.lastPathSegment?.substringAfterLast('/')
-            ?: defaultName
-    }
-
-    val resolvedName = name ?: return
-    if (autosave == null) {
-        AutosavePromptDialog(
-            documentName = resolvedName,
-            onChoose = onAutosaveChosen
-        )
-        return
-    }
-
-    LaunchedEffect(uri, autosave) {
-        val saved = if (autosave) {
-            repository.copyToAppStorage(
-                uri,
-                resolvedName,
-                preferredUris = preferences.recentDocuments.map { it.uri }
-            )
-        } else {
-            null
-        }
-        val entry = saved
-            ?: repository.documentInfo(uri)?.takeIf { repository.canRead(uri) }
-        if (entry != null) {
-            openDocument(context, preferences, entry)
-        } else {
-            // Nothing to record: a path Documents has no permission for, or a grant that has
-            // already expired. The viewer still opens, to say it couldn't read the document,
-            // rather than the app doing nothing at all.
-            viewerFormat(resolvedName, context.contentResolver.getType(uri).orEmpty())?.let { format ->
-                DocumentViewerActivity.start(context, uri, resolvedName, format)
+    val fallbackName = stringResource(R.string.incoming_default_name)
+    val handled by rememberUpdatedState(onHandled)
+    LaunchedEffect(uri) { viewModel.onEvent(IncomingEvent.Handle(uri, fallbackName)) }
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is IncomingEffect.OpenViewer -> DocumentViewerActivity.start(context, effect.target)
+                IncomingEffect.Handled -> handled()
             }
         }
-        onHandled()
+    }
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    (uiState as? IncomingUiState.AskAutosave)?.let { ask ->
+        AutosavePromptDialog(
+            documentName = ask.documentName,
+            onChoose = { viewModel.onEvent(IncomingEvent.ChooseAutosave(it)) }
+        )
     }
 }
 

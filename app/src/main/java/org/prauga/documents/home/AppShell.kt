@@ -24,7 +24,6 @@ import com.prauga.pvot.designsystem.navigation.PvotTabItem
 import com.prauga.pvot.designsystem.navigation.PvotTopBar
 import com.prauga.pvot.designsystem.navigation.rememberPvotTopBarCompact
 import kotlinx.coroutines.launch
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
 import org.prauga.documents.manage.ManageScreen
 import org.prauga.documents.recent.RecentScreen
@@ -62,7 +61,7 @@ private val Tabs = listOf(
  * each screen scrolling under both.
  */
 @Composable
-fun AppShell(preferences: AppPreferences, gridView: Boolean) {
+fun AppShell() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var navCompact by rememberSaveable { mutableStateOf(false) }
     // Swiping up through a list shrinks the nav bar out of the way; swiping back down restores it.
@@ -113,9 +112,9 @@ fun AppShell(preferences: AppPreferences, gridView: Boolean) {
         val topPadding = padding.calculateTopPadding()
 
         when (selectedTab) {
-            0 -> RecentScreen(preferences, listState, topPadding, showMessage, screenModifier)
+            0 -> RecentScreen(listState, topPadding, showMessage, screenModifier)
             1 -> ToolsScreen(listState, topPadding, screenModifier)
-            2 -> ManageScreen(preferences, gridView, listState, topPadding, showMessage, screenModifier)
+            2 -> ManageScreen(listState, topPadding, showMessage, screenModifier)
             else -> SettingsScreen(listState, topPadding, screenModifier)
         }
     }

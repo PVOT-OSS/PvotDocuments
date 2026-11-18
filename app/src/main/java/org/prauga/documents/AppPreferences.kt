@@ -1,116 +1,17 @@
 package org.prauga.documents
 
-import android.content.ContentResolver
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
-import android.net.Uri
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import org.json.JSONArray
 import org.json.JSONObject
-import org.prauga.documents.common.isOwnFile
-import org.prauga.documents.library.data.DocumentEntry
-import org.prauga.documents.library.data.TrashedDocument
 import timber.log.Timber
-import java.io.File
 
 /** The app's settings, kept in SharedPreferences and observable from Compose. */
 class AppPreferences(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    /**
-     * Folders the user added through the system picker, as persisted tree URIs. The app holds a
-     * persisted read/write permission on each; see [addFolder].
-     */
-    var folderUris by mutableStateOf(prefs.getStringSet(KEY_FOLDERS, emptySet()).orEmpty())
-        private set
-
-    /** Adds [treeUri] and takes a persisted permission on it, so it survives a reboot. */
-    fun addFolder(treeUri: Uri, contentResolver: ContentResolver) {
-        contentResolver.takePersistableUriPermission(treeUri, FolderPermissionFlags)
-        val updated = folderUris + treeUri.toString()
-        prefs.edit { putStringSet(KEY_FOLDERS, updated) }
-        folderUris = updated
-    }
-
-    /** Removes [treeUri] and releases the permission taken in [addFolder]. */
-    fun removeFolder(treeUri: Uri, contentResolver: ContentResolver) {
-        runCatching {
-            contentResolver.releasePersistableUriPermission(treeUri, FolderPermissionFlags)
-        }.onFailure { Timber.w("Could not release a folder permission: %s", it.javaClass.name) }
-        val updated = folderUris - treeUri.toString()
-        prefs.edit { putStringSet(KEY_FOLDERS, updated) }
-        folderUris = updated
-    }
-
-    /**
-     * Documents opened from another app, most recent first, capped at [MaxRecentDocuments]. An
-     * autosaved entry points at Documents' own copy; a not-saved one keeps the original content
-     * URI, which may stop resolving once the sending app's grant expires.
-     */
-    var recentDocuments by mutableStateOf(
-        // Entries an older build recorded for a path it could never read (a `file://` URI from
-        // another app's "Open with", outside Documents' own storage) are dropped on load.
-        decodeRecentDocuments(prefs.getString(KEY_RECENT, null)).filter {
-            it.uri.scheme != "file" || isOwnFile(context, File(it.uri.path.orEmpty()))
-        }
-    )
-        private set
-
-    /** Drops [entry] from [recentDocuments], such as one whose document no longer opens. */
-    fun removeRecentDocument(entry: DocumentEntry) {
-        val updated = recentDocuments.filterNot { it.uri == entry.uri }
-        prefs.edit { putString(KEY_RECENT, encodeRecentDocuments(updated)) }
-        recentDocuments = updated
-    }
-
-    /**
-     * Adds [entry], replacing any existing entry for the same document. Re-opening an unsaved
-     * document resolves to the same content URI, and re-opening an autosaved one reuses the same
-     * copy (see [org.prauga.documents.library.data.DocumentsRepository.copyToAppStorage]), so a URI match
-     * covers both. A name-and-size match also counts, for the same document reached through a
-     * different content URI or across an autosave setting change — but not between two of
-     * Documents' own copies: those only differ when their content does, so both stay listed.
-     * Nothing on disk is deleted here.
-     */
-    fun addRecentDocument(entry: DocumentEntry) {
-        val superseded = recentDocuments.filter {
-            it.uri == entry.uri || (
-                it.name == entry.name &&
-                    it.sizeBytes == entry.sizeBytes &&
-                    !(it.uri.scheme == "file" && entry.uri.scheme == "file")
-                )
-        }
-        val updated = (listOf(entry) + (recentDocuments - superseded.toSet())).take(MaxRecentDocuments)
-        prefs.edit { putString(KEY_RECENT, encodeRecentDocuments(updated)) }
-        recentDocuments = updated
-    }
-
-    /**
-     * Documents moved to Recently deleted, most recent first — see
-     * [org.prauga.documents.library.data.DocumentsRepository.moveToTrash].
-     */
-    var trashedDocuments by mutableStateOf(decodeTrashedDocuments(prefs.getString(KEY_TRASH, null)))
-        private set
-
-    fun addTrashedDocument(entry: TrashedDocument) {
-        val updated = listOf(entry) + trashedDocuments
-        prefs.edit { putString(KEY_TRASH, encodeTrashedDocuments(updated)) }
-        trashedDocuments = updated
-    }
-
-    /** Drops [entry] after it's been restored or deleted for good; the repository handles the
-     * file itself. */
-    fun removeTrashedDocument(entry: TrashedDocument) {
-        val updated = trashedDocuments - entry
-        prefs.edit { putString(KEY_TRASH, encodeTrashedDocuments(updated)) }
-        trashedDocuments = updated
-    }
 
     /** Where reading stopped in the document [key] names (see `readingKey` in the viewer), if
      * it has been opened before. */
@@ -134,9 +35,6 @@ class AppPreferences(context: Context) {
 
     private companion object {
         const val PREFS_NAME = "documents_preferences"
-        const val KEY_FOLDERS = "folder_uris"
-        const val KEY_RECENT = "recent_documents"
-        const val KEY_TRASH = "trashed_documents"
         const val KEY_READING_POSITIONS = "reading_positions"
         const val MaxReadingPositions = 100
 
@@ -148,67 +46,6 @@ class AppPreferences(context: Context) {
                     o.getString("key") to ReadingPosition(o.getInt("page"), o.optDouble("offset", 0.0).toFloat())
                 }
             }.onFailure { Timber.w("Dropping unreadable reading positions: %s", it.javaClass.name) }.getOrDefault(emptyList())
-        const val MaxRecentDocuments = 50
-        const val FolderPermissionFlags =
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-        fun JSONObject.putDocumentEntry(entry: DocumentEntry): JSONObject = apply {
-            put("uri", entry.uri.toString())
-            put("name", entry.name)
-            put("mimeType", entry.mimeType)
-            put("sizeBytes", entry.sizeBytes)
-            put("lastModified", entry.lastModified)
-        }
-
-        fun JSONObject.getDocumentEntry(): DocumentEntry = DocumentEntry(
-            uri = Uri.parse(getString("uri")),
-            name = getString("name"),
-            mimeType = getString("mimeType"),
-            sizeBytes = getLong("sizeBytes"),
-            lastModified = getLong("lastModified")
-        )
-
-        fun encodeRecentDocuments(entries: List<DocumentEntry>): String {
-            val array = JSONArray()
-            entries.forEach { entry -> array.put(JSONObject().putDocumentEntry(entry)) }
-            return array.toString()
-        }
-
-        fun decodeRecentDocuments(json: String?): List<DocumentEntry> {
-            if (json.isNullOrBlank()) return emptyList()
-            return runCatching {
-                val array = JSONArray(json)
-                (0 until array.length()).map { index -> array.getJSONObject(index).getDocumentEntry() }
-            }.onFailure { Timber.w("Dropping unreadable recent documents: %s", it.javaClass.name) }.getOrDefault(emptyList())
-        }
-
-        fun encodeTrashedDocuments(entries: List<TrashedDocument>): String {
-            val array = JSONArray()
-            entries.forEach { entry ->
-                array.put(
-                    JSONObject().putDocumentEntry(entry.document).apply {
-                        put("folderTreeUri", entry.folderTreeUri.toString())
-                        put("deletedAt", entry.deletedAt)
-                    }
-                )
-            }
-            return array.toString()
-        }
-
-        fun decodeTrashedDocuments(json: String?): List<TrashedDocument> {
-            if (json.isNullOrBlank()) return emptyList()
-            return runCatching {
-                val array = JSONArray(json)
-                (0 until array.length()).map { index ->
-                    val item = array.getJSONObject(index)
-                    TrashedDocument(
-                        document = item.getDocumentEntry(),
-                        folderTreeUri = Uri.parse(item.getString("folderTreeUri")),
-                        deletedAt = item.getLong("deletedAt")
-                    )
-                }
-            }.onFailure { Timber.w("Dropping unreadable trash entries: %s", it.javaClass.name) }.getOrDefault(emptyList())
-        }
     }
 }
 
