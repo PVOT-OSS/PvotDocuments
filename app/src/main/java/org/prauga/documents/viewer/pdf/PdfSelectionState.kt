@@ -1,0 +1,31 @@
+package org.prauga.documents.viewer.pdf
+
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+/**
+ * The text selection's actions, shared between [PdfView], which owns the selection, and the
+ * viewer's bottom bar ([PdfSelectionBar]), which offers them while something is selected.
+ */
+@Stable
+class PdfSelectionState {
+    /** Whether any text is selected. */
+    var active by mutableStateOf(false)
+        internal set
+
+    /** Height of [PdfSelectionBar] from the bottom of the screen, so a selection drag knows
+     * where the visible document ends and auto-scrolls before the finger reaches the bar. */
+    var barHeightPx by mutableIntStateOf(0)
+        internal set
+
+    /** A message for the viewer to show, such as a copy cut short; cleared once shown. */
+    var notice by mutableStateOf<String?>(null)
+
+    internal var onCopy: () -> Unit = {}
+    internal var onShare: () -> Unit = {}
+    internal var onSearch: () -> Unit = {}
+    internal var onSelectAll: () -> Unit = {}
+}

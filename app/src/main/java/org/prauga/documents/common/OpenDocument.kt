@@ -5,9 +5,6 @@ import org.prauga.documents.AppPreferences
 import org.prauga.documents.library.data.DocumentEntry
 import org.prauga.documents.viewer.DocumentViewerActivity
 
-/** What [openDocument] did, for the caller to report. */
-enum class OpenResult { Opened, Unsupported, Unreadable }
-
 /**
  * Opens [document] in [DocumentViewerActivity] and records it at the top of
  * [AppPreferences.recentDocuments], wherever it was opened from. A format without a viewer, or a

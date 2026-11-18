@@ -21,31 +21,6 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.math.roundToInt
 
-/** A page box in page-relative fractions: 0..1 across the page's displayed width and height, top
- * to bottom. Independent of how big the page is drawn, so it survives resizing and zoom. */
-internal data class PageRect(val left: Float, val top: Float, val right: Float, val bottom: Float) {
-    fun contains(x: Float, y: Float): Boolean = x in left..right && y in top..bottom
-}
-
-/** A page's text as Pdfium extracted it: [text] has one UTF-16 unit per character index, and
- * [boxes] holds that character's box (null for characters Pdfium generated, like the spaces and
- * line breaks it inserts between runs, which have no box of their own). */
-internal class PageText(val text: String, val boxes: List<PageRect?>)
-
-internal data class SearchMatch(val pageIndex: Int, val rects: List<PageRect>)
-
-/** A link on a page: tapping any of [rects] goes to [destPage] in this document, or opens [uri].
- * A web address written in the text can wrap onto the next line, hence more than one box. */
-internal data class PageLink(val rects: List<PageRect>, val destPage: Int?, val uri: String?)
-
-/** One entry of the document's outline (its bookmarks), flattened in reading order; [depth] is 0
- * for top-level entries. */
-data class OutlineEntry(val title: String, val pageIndex: Int, val depth: Int)
-
-/** Thrown by [PdfiumDocument.open] when the document is encrypted and [password] was missing or
- * wrong. */
-internal class PdfPasswordRequiredException(val passwordWasGiven: Boolean) : Exception()
-
 /** One open PDF, rendered and searched in-process by Pdfium. Every Pdfium call runs on one
  * serial background dispatcher: Pdfium isn't thread-safe, and serialising also keeps a long search
  * from racing the renders the user is waiting on. [pageAspects] is width / height per page, as

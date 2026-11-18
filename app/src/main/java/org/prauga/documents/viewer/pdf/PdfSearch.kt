@@ -17,12 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -45,42 +40,6 @@ import com.prauga.pvot.designsystem.components.textfield.PvotTextFieldDefaults
 import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
-
-/**
- * Find-in-document, shared between the viewer's bars and [PdfView]: the top bar opens it, the
- * bottom bar ([PdfSearchBar]) edits the query and steps through matches, and [PdfView] runs the
- * search and scrolls to each match.
- */
-@Stable
-class PdfSearchState {
-    /** Whether a document is loaded that can be searched; set by [PdfView]. */
-    var available by mutableStateOf(false)
-        internal set
-    var active by mutableStateOf(false)
-        private set
-    var query by mutableStateOf("")
-    var matchCount by mutableIntStateOf(0)
-        internal set
-    var currentMatch by mutableIntStateOf(0)
-        internal set
-
-    /** Height of [PdfSearchBar] from the bottom of the screen, keyboard included, so [PdfView]
-     * scrolls matches clear of it. */
-    var barHeightPx by mutableIntStateOf(0)
-        internal set
-
-    /** Moves to the match [delta] steps away; [PdfView] provides it. */
-    internal var step: (delta: Int) -> Unit = {}
-
-    fun open() {
-        active = true
-    }
-
-    fun close() {
-        active = false
-        query = ""
-    }
-}
 
 /**
  * The search bar, floating over the bottom of the document as glass and riding above the

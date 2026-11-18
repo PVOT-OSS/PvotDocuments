@@ -63,7 +63,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -737,14 +736,6 @@ private fun PdfContent(
     }
 }
 
-/** How the reader wants PDFs shown, from the app's preferences: where to start reading, where
- * reading stopped (to remember), and the dark-pages filter, null for normal pages. */
-class PdfReadingSettings(
-    val initialPosition: ReadingPosition?,
-    val onPositionChange: (ReadingPosition) -> Unit,
-    val pageFilter: ColorFilter?,
-)
-
 /** Inverts lightness while keeping hue (an inversion followed by a 180° hue turn), so black text
  * on white turns light on black but red stays red and blue stays blue. Each row sums to -1 on the
  * colour channels with an offset of 255: white maps to black and black to white. */
@@ -776,14 +767,6 @@ private val SearchBarClearance = 96.dp
 private const val SearchDebounceMillis = 250L
 private const val HiResSettleMillis = 150L
 private const val PageIndicatorHideMillis = 1500L
-
-/** The whole document's zoom and pan — pinch scales the entire scrolling document in place, as a
- * PDF reader does, rather than one page inside its own frame. Offsets are in screen pixels. */
-internal class PdfZoomState {
-    var scale by mutableFloatStateOf(1f)
-    var offsetX by mutableFloatStateOf(0f)
-    var offsetY by mutableFloatStateOf(0f)
-}
 
 private const val MaxZoom = 5f
 

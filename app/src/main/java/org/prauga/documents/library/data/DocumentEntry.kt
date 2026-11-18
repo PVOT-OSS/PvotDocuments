@@ -11,25 +11,3 @@ data class DocumentEntry(
     val sizeBytes: Long,
     val lastModified: Long
 )
-
-/** A folder the user added through the system picker. */
-data class FolderEntry(
-    val treeUri: Uri,
-    val displayName: String
-)
-
-/** A document paired with the folder it was found in, so deleting or restoring it knows where to
- * write. */
-data class ManagedDocument(
-    val document: DocumentEntry,
-    val folderTreeUri: Uri
-)
-
-/** A document moved to Recently deleted: its own copy in Documents' trash storage, plus where to
- * put it back. Restoring is only possible while [folderTreeUri] is still a folder the user has
- * added; see [org.prauga.documents.library.data.DocumentsRepository.restoreFromTrash]. */
-data class TrashedDocument(
-    val document: DocumentEntry,
-    val folderTreeUri: Uri,
-    val deletedAt: Long
-)
