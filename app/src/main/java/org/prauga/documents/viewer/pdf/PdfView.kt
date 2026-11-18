@@ -1,46 +1,21 @@
 package org.prauga.documents.viewer.pdf
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.gestures.animateScrollBy
 import android.content.ClipData
 import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.SystemClock
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.displayCutout
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.union
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.layout.LocalPinnableContainer
-import androidx.compose.ui.layout.PinnableContainer
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.text
-import androidx.compose.ui.text.AnnotatedString
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FloatExponentialDecaySpec
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import com.prauga.pvot.designsystem.motion.PvotDurations
-import com.prauga.pvot.designsystem.motion.PvotMotion
-import org.prauga.documents.ReadingPosition
-import androidx.compose.animation.core.animateDecay
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.calculateCentroid
 import androidx.compose.foundation.gestures.calculatePan
@@ -50,11 +25,20 @@ import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -63,19 +47,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -83,44 +71,48 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.LocalPinnableContainer
+import androidx.compose.ui.layout.PinnableContainer
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.prauga.pvot.coreui.PvotErrorContent
-import com.prauga.pvot.coreui.PvotLoadingContent
-import com.prauga.pvot.coreui.UiState
+import com.prauga.pvot.designsystem.motion.PvotDurations
+import com.prauga.pvot.designsystem.motion.PvotMotion
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.prauga.documents.R
+import org.prauga.documents.viewer.data.ReadingPosition
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/** [uri]'s pages, rendered in-process by Pdfium (Google's PDF engine, the one in Chrome). Pages
- * render lazily at list width as they scroll into view; when zoomed in, the visible part of each
- * on-screen page is re-rendered at the zoomed resolution once the gesture settles, so text stays
- * sharp. In-process matters: androidx.pdf is Pdfium too, but behind a system service whose
- * per-page binder round-trip stuttered visibly on scroll. See `CLAUDE.md`. */
+/** A PDF's pages, rendered in-process by Pdfium. Pages render lazily at list width as they
+ * scroll into view; when zoomed in, the visible part of each on-screen page is re-rendered at the
+ * zoomed resolution once the gesture settles, so text stays sharp. */
 @Composable
-fun PdfView(
-    uri: Uri,
+internal fun PdfView(
+    document: PdfiumDocument,
     topPadding: Dp,
     search: PdfSearchState,
     navigation: PdfNavigationState,
@@ -129,89 +121,37 @@ fun PdfView(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    var state by remember(uri) { mutableStateOf<UiState<PdfiumDocument>>(UiState.Loading) }
-    var retryToken by remember(uri) { mutableIntStateOf(0) }
-    // The password the user typed, kept only while this document is open.
-    var password by remember(uri) { mutableStateOf<String?>(null) }
-    // Non-null while the document is waiting for a password; true once one has been tried and failed.
-    var passwordPrompt by remember(uri) { mutableStateOf<Boolean?>(null) }
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-
-    LaunchedEffect(uri, retryToken, password) {
-        state = UiState.Loading
-        state = try {
-            UiState.Success(PdfiumDocument.open(context, uri, password)).also { passwordPrompt = null }
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: PdfPasswordRequiredException) {
-            passwordPrompt = e.passwordWasGiven
-            UiState.Loading
-        } catch (e: Exception) {
-            UiState.Error(readFailedMessage, e)
-        }
-    }
-
-    val opened = (state as? UiState.Success)?.data
-    DisposableEffect(opened) {
-        onDispose { opened?.close() }
-    }
     // Give cached renders and decoded pages back when the system is short of memory or the app
     // goes to the background; a large scanned PDF can otherwise hold a few hundred megabytes.
-    DisposableEffect(opened, context) {
+    DisposableEffect(document, context) {
         val callbacks = object : ComponentCallbacks2 {
             // From "running low" up: memory short while in use, or the app has been left. The
             // running levels are deprecated (newer Android sends only the hidden and background
             // ones), but older versions still send them.
             @Suppress("DEPRECATION")
             override fun onTrimMemory(level: Int) {
-                if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) opened?.trimMemory()
+                if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) document.trimMemory()
             }
 
             override fun onConfigurationChanged(newConfig: Configuration) = Unit
 
             @Deprecated("Superseded by onTrimMemory")
             override fun onLowMemory() {
-                opened?.trimMemory()
+                document.trimMemory()
             }
         }
         context.registerComponentCallbacks(callbacks)
         onDispose { context.unregisterComponentCallbacks(callbacks) }
     }
-
-    val prompt = passwordPrompt
-    if (prompt != null) {
-        PdfPasswordPrompt(
-            wrongPassword = prompt,
-            attempt = retryToken,
-            // Bumping the token retries even when the same password is entered again.
-            onSubmit = {
-                password = it
-                retryToken++
-            },
-            modifier = modifier.padding(top = topPadding),
-        )
-        return
-    }
-
-    when (val current = state) {
-        is UiState.Loading -> Box(modifier = modifier, contentAlignment = Alignment.Center) { PvotLoadingContent() }
-        is UiState.Error -> Box(modifier = modifier, contentAlignment = Alignment.Center) {
-            PvotErrorContent(
-                title = stringResource(R.string.viewer_read_failed),
-                message = current.cause?.message.orEmpty(),
-                onRetry = { retryToken++ },
-            )
-        }
-        is UiState.Success -> PdfContent(
-            document = current.data,
-            topPadding = topPadding,
-            search = search,
-            navigation = navigation,
-            reading = reading,
-            selectionState = selection,
-            modifier = modifier,
-        )
-    }
+    PdfContent(
+        document = document,
+        topPadding = topPadding,
+        search = search,
+        navigation = navigation,
+        reading = reading,
+        selectionState = selection,
+        modifier = modifier,
+    )
 }
 
 @Composable

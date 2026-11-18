@@ -18,6 +18,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.Closeable
 import java.io.IOException
 import kotlin.math.roundToInt
 
@@ -29,7 +30,7 @@ internal class PdfiumDocument private constructor(
     private val fd: ParcelFileDescriptor,
     private val doc: PdfDocument,
     val pageAspects: List<Float>,
-) {
+) : Closeable {
     private val pdfium = Dispatchers.IO.limitedParallelism(1)
     private val scope = CoroutineScope(SupervisorJob() + pdfium)
 
@@ -199,7 +200,7 @@ internal class PdfiumDocument private constructor(
     }
 
     /** Releases the document once any render or search already queued has finished. */
-    fun close() {
+    override fun close() {
         scope.launch {
             openPages.evictAll()
             pageBitmaps.evictAll()

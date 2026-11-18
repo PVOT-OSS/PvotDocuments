@@ -1,7 +1,5 @@
 package org.prauga.documents.viewer.richtext
 
-import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,11 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -44,9 +39,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -67,15 +60,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import com.prauga.pvot.coreui.PvotErrorContent
-import com.prauga.pvot.coreui.PvotLoadingContent
-import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.prauga.documents.R
 import org.prauga.documents.formats.richtext.DocBlock
 import org.prauga.documents.formats.richtext.DocImage
 import org.prauga.documents.formats.richtext.DocPageBreak
@@ -85,68 +73,8 @@ import org.prauga.documents.formats.richtext.ParagraphAlign
 import org.prauga.documents.formats.richtext.RichDocument
 import org.prauga.documents.formats.richtext.TextPosition
 import org.prauga.documents.formats.richtext.TextRun
-import org.prauga.documents.formats.richtext.parseDocx
-import org.prauga.documents.formats.richtext.parseOdt
 import org.prauga.documents.viewer.pdf.OpenLinkDialog
 import org.prauga.documents.viewer.pdf.isOpenableLink
-import java.io.File
-import java.util.zip.ZipFile
-
-/** A Word (`.docx`) or OpenDocument (`.odt`) document as flowing, selectable text: headings,
- * lists, tables and pictures in reading order, styled as the document styles them, reflowed to
- * the phone's width rather than laid out as pages. */
-@Composable
-fun RichDocumentView(uri: Uri, topPadding: Dp, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var state by remember(uri) { mutableStateOf<UiState<RichDocument>>(UiState.Loading) }
-    var retryToken by remember(uri) { mutableIntStateOf(0) }
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-
-    LaunchedEffect(uri, retryToken) {
-        state = UiState.Loading
-        state = try {
-            UiState.Success(withContext(Dispatchers.IO) { readRichDocument(context, uri) })
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            UiState.Error(readFailedMessage, e)
-        }
-    }
-    val opened = (state as? UiState.Success)?.data
-    DisposableEffect(opened) { onDispose { opened?.close() } }
-
-    when (val current = state) {
-        is UiState.Loading -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotLoadingContent()
-        }
-        is UiState.Error -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotErrorContent(
-                title = stringResource(R.string.viewer_read_failed),
-                message = current.cause?.message.orEmpty(),
-                onRetry = { retryToken++ },
-            )
-        }
-        is UiState.Success -> DocumentContent(current.data, topPadding, modifier)
-    }
-}
-
-/** [uri] parsed as a document. Both formats are zips read by random access (and images are read
- * later, as they scroll into view), so the file is copied to a private temporary file, which the
- * [RichDocument] deletes when closed. The format is recognized from the zip's contents. */
-private fun readRichDocument(context: Context, uri: Uri): RichDocument {
-    val temp = File.createTempFile("document", ".zip", context.cacheDir)
-    var parsed: RichDocument? = null
-    try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            temp.outputStream().use { input.copyTo(it) }
-        } ?: error("Could not open $uri for reading")
-        val isWord = ZipFile(temp).use { it.getEntry("word/document.xml") != null }
-        parsed = if (isWord) parseDocx(temp) else parseOdt(temp)
-        return parsed
-    } finally {
-        if (parsed == null) temp.delete()
-    }
-}
 
 /** What a paragraph's text is measured against: the document's own body size in points, and the
  * on-screen size it maps to, so a 16pt heading in an 11pt document is drawn 16/11 as big. */
@@ -162,8 +90,11 @@ private val LocalOpenLink = compositionLocalOf<(String) -> Unit> { {} }
 
 private const val DefaultBodyPt = 11f
 
+/** A Word (`.docx`) or OpenDocument (`.odt`) document as flowing, selectable text: headings,
+ * lists, tables and pictures in reading order, styled as the document styles them, reflowed to
+ * the phone's width rather than laid out as pages. */
 @Composable
-private fun DocumentContent(document: RichDocument, topPadding: Dp, modifier: Modifier) {
+fun RichDocumentView(document: RichDocument, topPadding: Dp, modifier: Modifier = Modifier) {
     val bodyPt = remember(document) { bodySizePt(document.blocks, document.defaultSizePt) }
     var pendingLink by remember(document) { mutableStateOf<String?>(null) }
     pendingLink?.let { OpenLinkDialog(it, onDismiss = { pendingLink = null }) }

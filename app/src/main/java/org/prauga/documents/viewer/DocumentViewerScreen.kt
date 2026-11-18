@@ -1,8 +1,5 @@
 package org.prauga.documents.viewer
 
-import android.content.Context
-import android.net.Uri
-import android.provider.OpenableColumns
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -22,20 +19,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.PvotErrorContent
 import com.prauga.pvot.coreui.PvotLoadingContent
 import com.prauga.pvot.coreui.UiState
@@ -46,22 +41,16 @@ import com.prauga.pvot.designsystem.motion.PvotMotion
 import com.prauga.pvot.designsystem.navigation.PvotTopBar
 import com.prauga.pvot.designsystem.navigation.PvotTopBarAction
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.R
-import org.prauga.documents.common.ViewerFormat
-import org.prauga.documents.formats.csv.parseCsv
+import org.prauga.documents.viewer.data.ReadingPosition
+import org.prauga.documents.viewer.data.ViewerContent
 import org.prauga.documents.viewer.pdf.DarkPageFilter
 import org.prauga.documents.viewer.pdf.GoToPageDialog
 import org.prauga.documents.viewer.pdf.PdfContentsSheet
 import org.prauga.documents.viewer.pdf.PdfNavigationState
 import org.prauga.documents.viewer.pdf.PdfPageIndicator
+import org.prauga.documents.viewer.pdf.PdfPasswordPrompt
 import org.prauga.documents.viewer.pdf.PdfReadingSettings
 import org.prauga.documents.viewer.pdf.PdfSearchBar
 import org.prauga.documents.viewer.pdf.PdfSearchState
@@ -75,24 +64,30 @@ import org.prauga.documents.viewer.sheet.SpreadsheetView
 import org.prauga.documents.viewer.slides.SlidesView
 import org.prauga.documents.viewer.text.HtmlView
 import org.prauga.documents.viewer.text.MarkdownView
-import timber.log.Timber
 
-/** Reads [uri] as [format] and shows it: plain text, code and JSON as scrollable text, CSV as a
- * table, Markdown and HTML as rendered styled text, PDF page by page, DOCX as styled paragraphs.
- * [name] is just the title, read once from the caller rather than re-resolved here. PDF and DOCX
- * read [uri] directly — a file descriptor and a zip, respectively — rather than as decoded text,
- * so each gets its own content branch below, skipping the text-loading state the other formats
- * share. */
+/** The document [DocumentViewerViewModel] reads, in the viewer for its format, under a top bar
+ * titled with its name. PDFs add search, contents, go-to-page and view options. */
 @Composable
 fun DocumentViewerScreen(
-    uri: Uri,
-    name: String,
-    format: ViewerFormat,
     onBack: () -> Unit,
     viewModel: DocumentViewerViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
-    val preferences = remember { AppPreferences(context) }
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val viewer = (uiState as? UiState.Success)?.data
+    if (viewer == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { PvotLoadingContent() }
+        return
+    }
+    DocumentViewerContent(viewer, viewModel::onEvent, onBack)
+}
+
+@Composable
+private fun DocumentViewerContent(
+    viewer: DocumentViewerUiState,
+    onEvent: (DocumentViewerEvent) -> Unit,
+    onBack: () -> Unit,
+) {
+    val name = viewer.name
     val pdfSearch = remember { PdfSearchState() }
     val pdfNavigation = remember { PdfNavigationState() }
     val pdfSelection = remember { PdfSelectionState() }
@@ -105,17 +100,14 @@ fun DocumentViewerScreen(
             snackbar.showSnackbar(notice)
         }
     }
-    val readingKey by produceState<String?>(null, uri, name) {
-        value = withContext(Dispatchers.IO) { readingKey(context, uri, name) }
+    val onPositionChange by rememberUpdatedState<(ReadingPosition) -> Unit> {
+        onEvent(DocumentViewerEvent.ReadingPositionChanged(it))
     }
-    val darkPdfPages by viewModel.darkPdfPages.collectAsStateWithLifecycle()
-    val pdfReading = remember(readingKey, darkPdfPages) {
-        val key = readingKey ?: return@remember null
-        val dark = darkPdfPages ?: return@remember null
+    val pdfReading = remember(viewer.initialPosition, viewer.darkPdfPages) {
         PdfReadingSettings(
-            initialPosition = preferences.readingPosition(key),
-            onPositionChange = { preferences.saveReadingPosition(key, it) },
-            pageFilter = if (dark) DarkPageFilter else null,
+            initialPosition = viewer.initialPosition,
+            onPositionChange = { onPositionChange(it) },
+            pageFilter = if (viewer.darkPdfPages) DarkPageFilter else null,
         )
     }
     var showGoToPage by remember { mutableStateOf(false) }
@@ -125,8 +117,8 @@ fun DocumentViewerScreen(
     if (showContents) PdfContentsSheet(pdfNavigation, onDismiss = { showContents = false })
     if (showOptions) {
         PdfViewOptionsSheet(
-            darkPages = darkPdfPages == true,
-            onDarkPagesChange = { viewModel.onEvent(DocumentViewerEvent.DarkPdfPages(it)) },
+            darkPages = viewer.darkPdfPages,
+            onDarkPagesChange = { onEvent(DocumentViewerEvent.DarkPdfPages(it)) },
             onPages = { pdfNavigation.overviewOpen = true },
             onGoToPage = { showGoToPage = true },
             onDismiss = { showOptions = false },
@@ -192,157 +184,74 @@ fun DocumentViewerScreen(
             }
         }
     ) { padding ->
-        if (format == ViewerFormat.Pdf) {
-            if (pdfReading == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
-                    contentAlignment = Alignment.Center
-                ) { PvotLoadingContent() }
-                return@PvotScreenScaffold
+        val topPadding = padding.calculateTopPadding()
+        val stateModifier = Modifier.fillMaxSize().padding(top = topPadding)
+        when (val content = viewer.content) {
+            ViewerContentState.Loading -> Box(stateModifier, contentAlignment = Alignment.Center) {
+                PvotLoadingContent()
             }
-            PdfView(
-                uri = uri,
-                topPadding = padding.calculateTopPadding(),
-                search = pdfSearch,
-                navigation = pdfNavigation,
-                reading = pdfReading,
-                selection = pdfSelection,
-                modifier = Modifier.fillMaxSize()
+            is ViewerContentState.NeedsPassword -> PdfPasswordPrompt(
+                wrongPassword = content.wrongPassword,
+                attempt = content.attempt,
+                onSubmit = { onEvent(DocumentViewerEvent.SubmitPassword(it)) },
+                modifier = stateModifier,
             )
-        } else if (format == ViewerFormat.Spreadsheet) {
-            SpreadsheetView(
-                uri = uri,
-                topPadding = padding.calculateTopPadding(),
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (format == ViewerFormat.Slides) {
-            SlidesView(
-                uri = uri,
-                topPadding = padding.calculateTopPadding(),
-                navigation = pdfNavigation,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (format == ViewerFormat.Docx || format == ViewerFormat.Odt) {
-            RichDocumentView(
-                uri = uri,
-                topPadding = padding.calculateTopPadding(),
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            TextDocumentContent(
-                uri = uri,
-                format = format,
-                readText = viewModel::readText,
-                topPadding = padding.calculateTopPadding()
+            ViewerContentState.Failed -> Box(stateModifier, contentAlignment = Alignment.Center) {
+                PvotErrorContent(
+                    title = stringResource(R.string.viewer_read_failed),
+                    message = stringResource(R.string.viewer_read_failed_message),
+                    onRetry = { onEvent(DocumentViewerEvent.Retry) },
+                )
+            }
+            is ViewerContentState.Ready -> ViewerBody(
+                content = content.content,
+                topPadding = topPadding,
+                pdfSearch = pdfSearch,
+                pdfNavigation = pdfNavigation,
+                pdfReading = pdfReading,
+                pdfSelection = pdfSelection,
             )
         }
     }
 }
 
 @Composable
-private fun TextDocumentContent(
-    uri: Uri,
-    format: ViewerFormat,
-    readText: suspend (Uri) -> String,
+private fun ViewerBody(
+    content: ViewerContent,
     topPadding: Dp,
+    pdfSearch: PdfSearchState,
+    pdfNavigation: PdfNavigationState,
+    pdfReading: PdfReadingSettings,
+    pdfSelection: PdfSelectionState,
 ) {
-    val scope = rememberCoroutineScope()
-    var state by remember(uri) { mutableStateOf<UiState<String>>(UiState.Loading) }
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-
-    suspend fun load() {
-        state = UiState.Loading
-        state = try {
-            val text = readText(uri)
-            UiState.Success(if (format == ViewerFormat.Json) prettyPrintJson(text) else text)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            UiState.Error(readFailedMessage, e)
+    val modifier = Modifier.fillMaxSize()
+    when (content) {
+        is ViewerContent.Pdf -> PdfView(
+            document = content.document,
+            topPadding = topPadding,
+            search = pdfSearch,
+            navigation = pdfNavigation,
+            reading = pdfReading,
+            selection = pdfSelection,
+            modifier = modifier,
+        )
+        is ViewerContent.Spreadsheet -> SpreadsheetView(content.workbook, topPadding, modifier)
+        is ViewerContent.Slides -> SlidesView(content.presentation, topPadding, pdfNavigation, modifier)
+        is ViewerContent.RichText -> RichDocumentView(content.document, topPadding, modifier)
+        is ViewerContent.Csv -> CsvSheetView(content.rows, topPadding, modifier)
+        is ViewerContent.Markdown -> MarkdownView(text = content.text, topPadding = topPadding, modifier = modifier)
+        is ViewerContent.Html -> HtmlView(html = content.html, topPadding = topPadding, modifier = modifier)
+        is ViewerContent.Text -> SelectionContainer {
+            Text(
+                text = content.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                fontFamily = if (content.monospace) FontFamily.Monospace else FontFamily.Default,
+                modifier = modifier
+                    .padding(top = topPadding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(PvotSpacing.L)
+            )
         }
     }
-
-    LaunchedEffect(uri) { load() }
-
-    when (val current = state) {
-        is UiState.Loading -> Box(
-            modifier = Modifier.fillMaxSize().padding(top = topPadding),
-            contentAlignment = Alignment.Center
-        ) { PvotLoadingContent() }
-
-        is UiState.Error -> Box(
-            modifier = Modifier.fillMaxSize().padding(top = topPadding),
-            contentAlignment = Alignment.Center
-        ) {
-            PvotErrorContent(
-                title = stringResource(R.string.viewer_read_failed),
-                message = current.cause?.message.orEmpty(),
-                onRetry = { scope.launch { load() } }
-            )
-        }
-
-        is UiState.Success -> if (format == ViewerFormat.Csv) {
-            CsvSheetView(
-                rows = remember(current.data) { parseCsv(current.data) },
-                topPadding = topPadding,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (format == ViewerFormat.Markdown) {
-            MarkdownView(
-                text = current.data,
-                topPadding = topPadding,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else if (format == ViewerFormat.Html) {
-            HtmlView(
-                html = current.data,
-                topPadding = topPadding,
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            SelectionContainer {
-                Text(
-                    text = current.data,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontFamily = if (format == ViewerFormat.Json || format == ViewerFormat.Code) {
-                        FontFamily.Monospace
-                    } else {
-                        FontFamily.Default
-                    },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(top = topPadding)
-                        .verticalScroll(rememberScrollState())
-                        .padding(PvotSpacing.L)
-                )
-            }
-        }
-    }
-}
-
-/** [text] reformatted with 2-space indentation if it parses as JSON, unchanged otherwise — a
- * malformed file should still open, just without the pretty-printing. */
-private fun prettyPrintJson(text: String): String {
-    val trimmed = text.trim()
-    return runCatching {
-        when {
-            trimmed.startsWith("{") -> JSONObject(trimmed).toString(2)
-            trimmed.startsWith("[") -> JSONArray(trimmed).toString(2)
-            else -> text
-        }
-    }.getOrDefault(text)
-}
-
-/** What a document's reading position is remembered under: its name and size, rather than its
- * URI. The same file reaches the viewer under different URIs — each "Open with" saves a fresh
- * copy, and a folder can be re-added — but it keeps its name and size. Falls back to the URI when
- * the size can't be read. */
-private fun readingKey(context: Context, uri: Uri, name: String): String {
-    val size = runCatching {
-        context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
-        }
-    }.onFailure { Timber.w("Could not read a document size: %s", it.javaClass.name) }.getOrNull()
-    return if (size != null && size > 0) "$name|$size" else uri.toString()
 }

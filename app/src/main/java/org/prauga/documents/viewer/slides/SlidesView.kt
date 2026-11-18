@@ -1,7 +1,5 @@
 package org.prauga.documents.viewer.slides
 
-import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,7 +29,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -43,7 +40,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -52,7 +48,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -77,18 +72,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import com.prauga.pvot.coreui.PvotErrorContent
-import com.prauga.pvot.coreui.PvotLoadingContent
-import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.prauga.documents.R
-import org.prauga.documents.viewer.pdf.pinchZoom
 import org.prauga.documents.formats.richtext.ParagraphAlign
 import org.prauga.documents.formats.richtext.TextPosition
 import org.prauga.documents.formats.slides.Presentation
@@ -100,15 +90,15 @@ import org.prauga.documents.formats.slides.SlideParagraph
 import org.prauga.documents.formats.slides.SlideShape
 import org.prauga.documents.formats.slides.SlideText
 import org.prauga.documents.formats.slides.SlideTextAnchor
-import org.prauga.documents.formats.slides.parseOdp
-import org.prauga.documents.formats.slides.parsePptx
 import org.prauga.documents.viewer.pdf.OpenLinkDialog
 import org.prauga.documents.viewer.pdf.PdfNavigationState
 import org.prauga.documents.viewer.pdf.PdfZoomState
 import org.prauga.documents.viewer.pdf.isOpenableLink
-import java.io.File
-import java.util.zip.ZipFile
+import org.prauga.documents.viewer.pdf.pinchZoom
 import kotlin.math.roundToInt
+
+/** Opens a link from a slide, after asking. */
+private val LocalSlideLink = compositionLocalOf<(String) -> Unit> { {} }
 
 /**
  * A PowerPoint (`.pptx`) or OpenDocument (`.odp`) presentation, slide after slide, each drawn as
@@ -117,63 +107,12 @@ import kotlin.math.roundToInt
  * theme. Pinch to zoom; the page indicator and go-to-page work as in the PDF viewer.
  */
 @Composable
-fun SlidesView(uri: Uri, topPadding: Dp, navigation: PdfNavigationState, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var state by remember(uri) { mutableStateOf<UiState<Presentation>>(UiState.Loading) }
-    var retryToken by remember(uri) { mutableIntStateOf(0) }
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-
-    LaunchedEffect(uri, retryToken) {
-        state = UiState.Loading
-        state = try {
-            UiState.Success(withContext(Dispatchers.IO) { readPresentation(context, uri) })
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            UiState.Error(readFailedMessage, e)
-        }
-    }
-    val opened = (state as? UiState.Success)?.data
-    DisposableEffect(opened) { onDispose { opened?.close() } }
-
-    when (val current = state) {
-        is UiState.Loading -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotLoadingContent()
-        }
-        is UiState.Error -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotErrorContent(
-                title = stringResource(R.string.viewer_read_failed),
-                message = current.cause?.message.orEmpty(),
-                onRetry = { retryToken++ },
-            )
-        }
-        is UiState.Success -> SlideList(current.data, topPadding, navigation, modifier)
-    }
-}
-
-/** [uri] parsed as a presentation, from a private copy (pictures are read from it later, as their
- * slides come into view); the [Presentation] deletes the copy when closed. The format is
- * recognized from the zip's contents. */
-private fun readPresentation(context: Context, uri: Uri): Presentation {
-    val temp = File.createTempFile("slides", ".zip", context.cacheDir)
-    var parsed: Presentation? = null
-    try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            temp.outputStream().use { input.copyTo(it) }
-        } ?: error("Could not open $uri for reading")
-        val isPptx = ZipFile(temp).use { it.getEntry("ppt/presentation.xml") != null }
-        parsed = if (isPptx) parsePptx(temp) else parseOdp(temp)
-        return parsed
-    } finally {
-        if (parsed == null) temp.delete()
-    }
-}
-
-/** Opens a link from a slide, after asking. */
-private val LocalSlideLink = compositionLocalOf<(String) -> Unit> { {} }
-
-@Composable
-private fun SlideList(presentation: Presentation, topPadding: Dp, navigation: PdfNavigationState, modifier: Modifier) {
+fun SlidesView(
+    presentation: Presentation,
+    topPadding: Dp,
+    navigation: PdfNavigationState,
+    modifier: Modifier = Modifier,
+) {
     val listState = rememberLazyListState()
     val zoom = remember(presentation) { PdfZoomState() }
     val scope = rememberCoroutineScope()

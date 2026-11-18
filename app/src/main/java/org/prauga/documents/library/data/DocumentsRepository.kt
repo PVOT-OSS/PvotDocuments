@@ -12,6 +12,7 @@ import org.prauga.documents.BuildConfig
 import org.prauga.documents.common.coroutines.IoDispatcher
 import timber.log.Timber
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -57,8 +58,7 @@ class DocumentsRepository @Inject constructor(
      * actually text — the viewer turns that into [com.prauga.pvot.coreui.UiState.Error].
      */
     suspend fun readText(uri: Uri): String = withContext(io) {
-        val stream = context.contentResolver.openInputStream(uri)
-            ?: error("This document can't be opened right now.")
+        val stream = context.contentResolver.openInputStream(uri) ?: throw FileNotFoundException()
         stream.use { it.readBytes().toString(Charsets.UTF_8) }
     }
 

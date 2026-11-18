@@ -1,7 +1,5 @@
 package org.prauga.documents.viewer.sheet
 
-import android.content.Context
-import android.net.Uri
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
@@ -22,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -42,7 +39,6 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,15 +59,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.prauga.pvot.coreui.PvotEmptyContent
-import com.prauga.pvot.coreui.PvotErrorContent
-import com.prauga.pvot.coreui.PvotLoadingContent
-import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.components.PvotTabRow
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.prauga.documents.R
 import org.prauga.documents.formats.sheet.CellAlign
 import org.prauga.documents.formats.sheet.CellRange
@@ -81,70 +71,13 @@ import org.prauga.documents.formats.sheet.SheetCell
 import org.prauga.documents.formats.sheet.SheetRow
 import org.prauga.documents.formats.sheet.Workbook
 import org.prauga.documents.formats.sheet.columnName
-import org.prauga.documents.formats.sheet.parseOds
-import org.prauga.documents.formats.sheet.parseXlsx
-import java.io.File
-import java.util.zip.ZipFile
 import kotlin.math.max
-
-/** An Excel or OpenDocument spreadsheet: its sheets as tabs, each a grid that scrolls both ways
- * with the column letters and row numbers kept in view, and pinch to zoom. */
-@Composable
-fun SpreadsheetView(uri: Uri, topPadding: Dp, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    var state by remember(uri) { mutableStateOf<UiState<Workbook>>(UiState.Loading) }
-    var retryToken by remember(uri) { mutableIntStateOf(0) }
-    val readFailedMessage = stringResource(R.string.viewer_read_failed)
-
-    LaunchedEffect(uri, retryToken) {
-        state = UiState.Loading
-        state = try {
-            UiState.Success(withContext(Dispatchers.IO) { readWorkbook(context, uri) })
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            UiState.Error(readFailedMessage, e)
-        }
-    }
-
-    when (val current = state) {
-        is UiState.Loading -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotLoadingContent()
-        }
-        is UiState.Error -> Box(modifier.padding(top = topPadding), contentAlignment = Alignment.Center) {
-            PvotErrorContent(
-                title = stringResource(R.string.viewer_read_failed),
-                message = current.cause?.message.orEmpty(),
-                onRetry = { retryToken++ },
-            )
-        }
-        is UiState.Success -> WorkbookContent(current.data, topPadding, modifier)
-    }
-}
 
 /** A grid of plain rows (CSV), shown the same way as a one-sheet workbook. */
 @Composable
 fun CsvSheetView(rows: List<List<String>>, topPadding: Dp, modifier: Modifier = Modifier) {
     val workbook = remember(rows) { csvWorkbook(rows) }
-    WorkbookContent(workbook, topPadding, modifier)
-}
-
-/**
- * [uri] parsed as a workbook. Both formats are zips whose parts are read out of order, so the
- * document is copied to a private temporary file first and deleted after. The format is
- * recognized from the zip's contents rather than the name, which a sender may have got wrong.
- */
-private fun readWorkbook(context: Context, uri: Uri): Workbook {
-    val temp = File.createTempFile("sheet", ".zip", context.cacheDir)
-    try {
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            temp.outputStream().use { input.copyTo(it) }
-        } ?: error("Could not open $uri for reading")
-        val isOds = ZipFile(temp).use { it.getEntry("content.xml") != null && it.getEntry("xl/workbook.xml") == null }
-        return if (isOds) parseOds(temp) else parseXlsx(temp)
-    } finally {
-        temp.delete()
-    }
+    SpreadsheetView(workbook, topPadding, modifier)
 }
 
 private fun csvWorkbook(rows: List<List<String>>): Workbook {
@@ -175,8 +108,10 @@ private fun csvWorkbook(rows: List<List<String>>): Workbook {
 /** CSV has no widths of its own; a little wider than Excel's default suits typical text columns. */
 private const val CsvColumnWidthChars = 14f
 
+/** An Excel or OpenDocument spreadsheet: its sheets as tabs, each a grid that scrolls both ways
+ * with the column letters and row numbers kept in view, and pinch to zoom. */
 @Composable
-private fun WorkbookContent(workbook: Workbook, topPadding: Dp, modifier: Modifier) {
+fun SpreadsheetView(workbook: Workbook, topPadding: Dp, modifier: Modifier = Modifier) {
     var selected by remember(workbook) { mutableIntStateOf(0) }
     Column(modifier.fillMaxSize().padding(top = topPadding)) {
         if (workbook.sheets.size > 1) {
