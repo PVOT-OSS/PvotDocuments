@@ -1,0 +1,1 @@
+First release: PDF, Word, OpenDocument, Excel, PowerPoint, CSV, Markdown, HTML, JSON and text viewers; folders, Recent, search, sort, grid, share, rename and Recently deleted.

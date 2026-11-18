@@ -28,6 +28,7 @@ path = [
     "app/src/main/res/values/themes.xml",
     "app/src/main/res/xml/file_paths.xml",
     "docs/**",
+    "fastlane/metadata/android/*/images/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Debayan G <debz.exe@gmail.com>"
@@ -53,6 +54,8 @@ path = [
     "app/src/main/res/values/colors.xml",
     "app/src/main/res/values/dimens.xml",
     "app/src/test/resources/**",
+    "fastlane/metadata/android/*/*.txt",
+    "fastlane/metadata/android/*/changelogs/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Saalim Quadri <danascape@gmail.com>"

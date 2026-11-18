@@ -1,0 +1,14 @@
+Pvot Documents is one private place to open and organize the documents on your phone.
+
+It opens:
+• PDF, including password-protected files, with search, text selection, contents, page overview and dark pages
+• Word (DOCX) and OpenDocument text (ODT)
+• Excel (XLSX) and OpenDocument spreadsheets (ODS)
+• PowerPoint (PPTX) and OpenDocument presentations (ODP)
+• CSV, Markdown, HTML, JSON, plain text and source code
+
+Add the folders you want with Android's own folder picker, then search, sort, view as a list or a grid, select several documents to share or delete, rename, and restore from Recently deleted. Documents opened from other apps with "Open with" or "Share" show up in Recent, filtered by type, and you can choose to keep a copy.
+
+Everything stays on your phone: the app has no internet permission, asks for no storage permission, and has no ads, no analytics and no tracking. Documents are view-only for now; editing, PDF tools and a scanner are planned.
+
+Free software under the GNU GPL, version 3 or later.
