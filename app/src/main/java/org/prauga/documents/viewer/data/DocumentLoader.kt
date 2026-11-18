@@ -6,6 +6,7 @@ package org.prauga.documents.viewer.data
 
 import android.content.Context
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -25,6 +26,8 @@ import org.prauga.documents.viewer.pdf.PdfiumDocument
 import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
+import java.nio.ByteBuffer
+import java.nio.charset.CodingErrorAction
 import java.util.zip.ZipFile
 import javax.inject.Inject
 
@@ -51,6 +54,26 @@ class DocumentLoader @Inject constructor(
         ViewerFormat.Spreadsheet -> ViewerContent.Spreadsheet(withContext(io) { readWorkbook(uri) })
         ViewerFormat.Slides -> ViewerContent.Slides(withContext(io) { readPresentation(uri) })
         ViewerFormat.Docx, ViewerFormat.Odt -> ViewerContent.RichText(withContext(io) { readRichDocument(uri) })
+        ViewerFormat.Binary -> readUnknown(uri)
+    }
+
+    /** Text when the file reads cleanly as UTF-8 and isn't too large to lay out; its bytes otherwise. */
+    private suspend fun readUnknown(uri: Uri): ViewerContent {
+        val source = withContext(io) { openBytes(uri) }
+        if (source.size in 0..MaxTextBytes && looksLikeText(source.read(0, TextSniffBytes))) {
+            source.close()
+            return ViewerContent.Text(documentsRepository.readText(uri), monospace = false)
+        }
+        return ViewerContent.Bytes(source, documentsRepository.mimeType(uri))
+    }
+
+    // A provider that streams (a pipe) reports no size and can't seek, so it gets a private copy.
+    private fun openBytes(uri: Uri): ByteSource {
+        val descriptor = context.contentResolver.openFileDescriptor(uri, "r") ?: throw FileNotFoundException()
+        if (descriptor.statSize >= 0) return ByteSource(descriptor, io)
+        descriptor.close()
+        val copy = copyToTemp(uri, "bytes")
+        return ByteSource(ParcelFileDescriptor.open(copy, ParcelFileDescriptor.MODE_READ_ONLY), io, copy)
     }
 
     private fun copyToTemp(uri: Uri, prefix: String): File {
@@ -111,5 +134,24 @@ class DocumentLoader @Inject constructor(
                 else -> text
             }
         }.onFailure { Timber.d("Showing JSON as written: %s", it.javaClass.name) }.getOrDefault(text)
+    }
+
+    private companion object {
+        const val TextSniffBytes = 64 * 1024
+        const val MaxTextBytes = 8L * 1024 * 1024
+
+        // No NUL byte and valid UTF-8, allowing a character cut off at the end of the sample.
+        fun looksLikeText(sample: ByteArray): Boolean {
+            if (sample.any { it == 0.toByte() }) return false
+            for (cut in 0..3) {
+                if (cut > sample.size) break
+                val decoder = Charsets.UTF_8.newDecoder()
+                    .onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT)
+                val decoded = runCatching { decoder.decode(ByteBuffer.wrap(sample, 0, sample.size - cut)) }
+                if (decoded.isSuccess) return true
+            }
+            return false
+        }
     }
 }

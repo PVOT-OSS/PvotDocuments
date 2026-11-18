@@ -10,6 +10,7 @@ import org.prauga.documents.viewer.pdf.PdfiumDocument
 
 sealed interface ViewerContent {
     data class Text(val text: String, val monospace: Boolean) : ViewerContent
+    data class Bytes(val source: ByteSource, val mimeType: String) : ViewerContent
     data class Csv(val rows: List<List<String>>) : ViewerContent
     data class Markdown(val text: String) : ViewerContent
     data class Html(val html: String) : ViewerContent

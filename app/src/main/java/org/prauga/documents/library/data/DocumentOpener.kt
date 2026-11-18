@@ -14,7 +14,7 @@ class DocumentOpener @Inject constructor(
     private val libraryRepository: LibraryRepository,
 ) {
     suspend fun open(document: DocumentEntry): OpenResult {
-        val format = viewerFormat(document.name, document.mimeType) ?: return OpenResult.Unsupported
+        val format = viewerFormat(document.name, document.mimeType)
         val uri = documentsRepository.readableUri(document) ?: return OpenResult.Unreadable
         libraryRepository.addRecentDocument(document)
         return OpenResult.Opened(ViewerTarget(uri, document.name, format))

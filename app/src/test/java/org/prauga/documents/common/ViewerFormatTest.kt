@@ -4,7 +4,6 @@
 package org.prauga.documents.common
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 class ViewerFormatTest {
@@ -25,8 +24,9 @@ class ViewerFormatTest {
     }
 
     @Test
-    fun hasNoViewerForUnknownBinaries() {
-        assertNull(viewerFormat("archive.zip", "application/zip"))
+    fun fallsBackToTheBytesViewForAnythingElse() {
+        assertEquals(ViewerFormat.Binary, viewerFormat("archive.zip", "application/zip"))
+        assertEquals(ViewerFormat.Binary, viewerFormat("noextension", ""))
     }
 
     @Test

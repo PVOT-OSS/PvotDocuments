@@ -69,7 +69,6 @@ class RecentViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = documentOpener.open(document)) {
                 is OpenResult.Opened -> effectChannel.send(DocumentEffect.OpenViewer(result.target))
-                OpenResult.Unsupported -> effectChannel.send(DocumentEffect.Message(R.string.manage_open_unsupported))
                 OpenResult.Unreadable -> {
                     libraryRepository.removeRecentDocument(document)
                     effectChannel.send(DocumentEffect.Message(R.string.recent_unavailable))

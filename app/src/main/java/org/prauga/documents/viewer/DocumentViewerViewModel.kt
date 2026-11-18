@@ -127,6 +127,7 @@ class DocumentViewerViewModel @Inject constructor(
         is ViewerContent.Pdf -> document
         is ViewerContent.Slides -> presentation
         is ViewerContent.RichText -> document
+        is ViewerContent.Bytes -> source
         is ViewerContent.Text, is ViewerContent.Csv, is ViewerContent.Markdown, is ViewerContent.Html,
         is ViewerContent.Spreadsheet -> null
     }

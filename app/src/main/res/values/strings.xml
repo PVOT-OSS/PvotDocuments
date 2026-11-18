@@ -16,6 +16,8 @@
     <string name="recent_unavailable">This document can\'t be opened anymore, so it was removed from Recent</string>
     <string name="viewer_read_failed">Couldn\'t open this document</string>
     <string name="viewer_read_failed_message">Check that it is still there and that Documents can still open it, then try again.</string>
+    <string name="viewer_bytes_summary">Documents can\'t show this kind of file, so here are its raw bytes. %1$s · %2$s</string>
+    <string name="viewer_type_unknown">unknown type</string>
     <string name="viewer_pdf_search">Search in document</string>
     <string name="viewer_pdf_search_placeholder">Search</string>
     <string name="viewer_pdf_search_close">Close search</string>
@@ -83,7 +85,6 @@
     <string name="manage_sort_name">Name</string>
     <string name="manage_sort_date">Date</string>
     <string name="manage_sort_size">Size</string>
-    <string name="manage_open_unsupported">Opening documents comes in a later update</string>
     <string name="manage_share_document">Share %1$s</string>
     <string name="manage_moved_to_trash">Moved to Recently deleted</string>
     <string name="manage_delete_failed">Couldn\'t delete this document</string>

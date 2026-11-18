@@ -14,7 +14,8 @@ enum class ViewerFormat {
     Docx,
     Odt,
     Spreadsheet,
-    Slides
+    Slides,
+    Binary,
 }
 
 private val CodeExtensions = setOf(
@@ -24,7 +25,7 @@ private val CodeExtensions = setOf(
 )
 
 /** Extension first, MIME type as a fallback, for the same reason as [documentKind]. */
-fun viewerFormat(name: String, mimeType: String): ViewerFormat? {
+fun viewerFormat(name: String, mimeType: String): ViewerFormat {
     val extension = name.substringAfterLast('.', missingDelimiterValue = "").lowercase()
     return when {
         extension == "txt" -> ViewerFormat.PlainText
@@ -50,6 +51,6 @@ fun viewerFormat(name: String, mimeType: String): ViewerFormat? {
         mimeType.contains("spreadsheetml") || mimeType.equals("application/vnd.ms-excel.sheet.macroEnabled.12", ignoreCase = true) ||
             mimeType == "application/vnd.oasis.opendocument.spreadsheet" -> ViewerFormat.Spreadsheet
         mimeType.startsWith("text/") -> ViewerFormat.PlainText
-        else -> null
+        else -> ViewerFormat.Binary
     }
 }

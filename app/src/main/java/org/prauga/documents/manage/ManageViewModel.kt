@@ -111,7 +111,6 @@ class ManageViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = documentOpener.open(document.document)) {
                 is OpenResult.Opened -> effectChannel.send(DocumentEffect.OpenViewer(result.target))
-                OpenResult.Unsupported -> message(R.string.manage_open_unsupported)
                 OpenResult.Unreadable -> message(R.string.viewer_read_failed)
             }
         }

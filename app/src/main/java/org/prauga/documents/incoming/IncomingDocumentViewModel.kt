@@ -86,7 +86,7 @@ class IncomingDocumentViewModel @Inject constructor(
         } else {
             // Nothing to record: a grant that has already expired, say. The viewer still opens,
             // to say it couldn't read the document, rather than the app doing nothing at all.
-            viewerFormat(name, documentsRepository.mimeType(uri))?.let { ViewerTarget(uri, name, it) }
+            ViewerTarget(uri, name, viewerFormat(name, documentsRepository.mimeType(uri)))
         }
         target?.let { effectChannel.send(IncomingEffect.OpenViewer(it)) }
         effectChannel.send(IncomingEffect.Handled)

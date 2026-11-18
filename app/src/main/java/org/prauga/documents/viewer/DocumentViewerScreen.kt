@@ -68,6 +68,7 @@ import org.prauga.documents.viewer.richtext.RichDocumentView
 import org.prauga.documents.viewer.sheet.CsvSheetView
 import org.prauga.documents.viewer.sheet.SpreadsheetView
 import org.prauga.documents.viewer.slides.SlidesView
+import org.prauga.documents.viewer.text.BytesView
 import org.prauga.documents.viewer.text.HtmlView
 import org.prauga.documents.viewer.text.MarkdownView
 
@@ -256,6 +257,7 @@ private fun ViewerBody(
         is ViewerContent.Csv -> CsvSheetView(content.rows, topPadding, modifier)
         is ViewerContent.Markdown -> MarkdownView(text = content.text, topPadding = topPadding, modifier = modifier)
         is ViewerContent.Html -> HtmlView(html = content.html, topPadding = topPadding, modifier = modifier)
+        is ViewerContent.Bytes -> BytesView(content.source, content.mimeType, topPadding, modifier)
         is ViewerContent.Text -> SelectionContainer {
             Text(
                 text = content.text,
