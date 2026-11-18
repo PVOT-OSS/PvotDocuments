@@ -62,10 +62,7 @@ import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
 import org.prauga.documents.library.data.ManagedDocument
 
-/**
- * Folders the user added, and the documents found directly inside them. Tapping one opens it if
- * its format has a viewer; [onMessage] reports when it doesn't, and the outcome of other actions.
- */
+/** [onMessage] reports a document with no viewer, and the outcome of other actions. */
 @Composable
 fun ManageScreen(
     state: LazyListState,
@@ -457,7 +454,6 @@ private fun ManageContent(
     }
 }
 
-/** The "+" menu: a plain-text format to create now, or scanning, which isn't built until Phase 5. */
 @Composable
 private fun NewDocumentSheet(
     onDismiss: () -> Unit,
@@ -489,11 +485,8 @@ private fun NewDocumentSheet(
     }
 }
 
-/** A document in Manage's grid view: icon, name and size, with the same overflow menu as the
- * list row, just smaller — grid mode trades the size reading room for an at-a-glance layout, it
- * doesn't drop an action. In selection mode the corner button becomes a selected/unselected mark
- * instead, matching the list row's own swap to [com.prauga.pvot.designsystem.components.list.PvotListRow]'s
- * tinted [selected] state. */
+/** Keeps every action of the list row's overflow menu; in selection mode that corner button
+ * becomes the selection mark instead. */
 @Composable
 private fun DocumentGridCard(
     managed: ManagedDocument,
@@ -567,8 +560,6 @@ private fun DocumentGridCard(
     }
 }
 
-/** The bar that replaces the normal screen top while documents are selected: a count and the
- * actions that work on all of them at once. */
 @Composable
 private fun SelectionToolbar(
     count: Int,

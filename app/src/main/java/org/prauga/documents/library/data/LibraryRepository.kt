@@ -42,7 +42,7 @@ class LibraryRepository @Inject constructor(
         scope.launch { writes.withLock { state.value = read(preferences.get()) } }
     }
 
-    /** Adds [treeUri] and takes a persisted permission on it, so it survives a reboot. */
+    /** Stores [treeUri] only if a persisted permission on it could be taken. */
     fun addFolder(treeUri: Uri) = write { stored, current ->
         val granted = withContext(io) {
             runCatching {
@@ -52,7 +52,6 @@ class LibraryRepository @Inject constructor(
         if (granted) stored.edit { putStringSet(KeyFolders, current.folderUris + treeUri.toString()) }
     }
 
-    /** Removes [treeUri] and releases the permission taken in [addFolder]. */
     fun removeFolder(treeUri: Uri) = write { stored, current ->
         withContext(io) {
             runCatching {
@@ -63,12 +62,10 @@ class LibraryRepository @Inject constructor(
     }
 
     /**
-     * Adds [entry] at the top of the recent documents, replacing any entry for the same document.
-     * Re-opening an unsaved document resolves to the same content URI, and re-opening an
-     * autosaved one reuses the same copy (see [DocumentsRepository.copyToAppStorage]), so a URI
-     * match covers both. A name-and-size match also counts, for the same document reached through
-     * a different content URI or across an autosave setting change — but not between two of the
-     * app's own copies: those only differ when their content does, so both stay listed.
+     * Replaces any entry for the same document: same URI (an autosaved copy is reused, see
+     * [DocumentsRepository.copyToAppStorage]), or same name and size, for one reached through a
+     * different URI or across an autosave setting change. Two of the app's own copies never match
+     * on name and size, since they only differ when their content does.
      */
     fun addRecentDocument(entry: DocumentEntry) = write { stored, current ->
         val superseded = current.recentDocuments.filter {

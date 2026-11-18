@@ -22,12 +22,7 @@ import org.prauga.documents.library.data.OpenResult
 import org.prauga.documents.settings.data.SettingsRepository
 import javax.inject.Inject
 
-/**
- * A document the app was opened or shared with. The first time, asks once whether to copy it
- * into the app's own storage; after that the choice is remembered (and changeable from
- * Settings). Either way the document joins the recent documents and opens in the viewer; one the
- * app can't read isn't recorded.
- */
+/** Asks once whether to copy incoming documents into the app's own storage, then remembers it. */
 @HiltViewModel
 class IncomingDocumentViewModel @Inject constructor(
     private val documentsRepository: DocumentsRepository,

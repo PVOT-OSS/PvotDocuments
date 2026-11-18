@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalResources
 import kotlinx.coroutines.flow.Flow
 import org.prauga.documents.viewer.DocumentViewerActivity
 
-/** Carries out the [DocumentEffect]s a screen's ViewModel sends, as they arrive. */
 @Composable
 fun DocumentEffects(effects: Flow<DocumentEffect>, onMessage: (String) -> Unit) {
     val context = LocalContext.current

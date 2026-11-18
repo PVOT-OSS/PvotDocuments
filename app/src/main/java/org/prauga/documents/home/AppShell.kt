@@ -56,10 +56,6 @@ private val Tabs = listOf(
     )
 )
 
-/**
- * The app's frame: a top bar titled after the current tab and four tabs on a glass nav bar, with
- * each screen scrolling under both.
- */
 @Composable
 fun AppShell() {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -79,7 +75,6 @@ fun AppShell() {
     val listState = listStates[selectedTab]
     val topBarCompact = rememberPvotTopBarCompact(listState)
 
-    // For feedback on things that aren't built yet, such as opening a document (phase 2).
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val showMessage: (String) -> Unit = { message ->

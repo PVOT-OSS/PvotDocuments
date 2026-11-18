@@ -3,7 +3,6 @@ package org.prauga.documents.common
 import android.content.Context
 import android.content.Intent
 
-/** Opens the system share sheet for [documents]: one chooser, however many there are. */
 fun shareDocuments(context: Context, documents: List<SharedDocument>) {
     val single = documents.singleOrNull()
     val intent = if (single != null) {

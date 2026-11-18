@@ -15,7 +15,6 @@ import com.prauga.pvot.designsystem.components.PvotDialogActionStyle
 import org.prauga.documents.R
 import org.prauga.documents.viewer.DocumentViewerActivity
 
-/** Handles [uri] through [IncomingDocumentViewModel]; [onHandled] runs once it is done. */
 @Composable
 fun IncomingDocumentHandler(
     uri: Uri,
@@ -48,7 +47,7 @@ private fun AutosavePromptDialog(documentName: String, onChoose: (Boolean) -> Un
     PvotDialog(
         visible = true,
         // The choice is required to proceed; dismissing without one would leave the document
-        // half-handled. A default lives in Settings for anyone who skips this by force-closing.
+        // half-handled.
         onDismissRequest = {},
         dismissOnOutsideTap = false,
         title = stringResource(R.string.incoming_autosave_title),

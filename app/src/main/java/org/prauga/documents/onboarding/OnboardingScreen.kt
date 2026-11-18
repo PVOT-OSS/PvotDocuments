@@ -33,13 +33,7 @@ import com.prauga.pvot.designsystem.components.button.PvotButtonStyle
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/**
- * Shown once, before [org.prauga.documents.home.AppShell]: lets the user grant Documents and
- * Downloads up front, so Manage already has them instead of starting empty. There is no API to
- * grant folder access without the system picker, so each button still opens it, pointed straight
- * at that folder through the picker's initial-URI hint (see [PublicFolder.initialUri]) — one tap
- * to confirm rather than a folder hunt. Continuing is always allowed; neither folder is required.
- */
+/** Shown once, before [org.prauga.documents.home.AppShell]; neither folder is required. */
 @Composable
 fun OnboardingScreen(
     modifier: Modifier = Modifier,

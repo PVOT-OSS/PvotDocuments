@@ -9,13 +9,8 @@ import org.prauga.documents.R
 import org.prauga.documents.formats.slides.Presentation
 
 /**
- * The file type a document's icon is tinted by, same idea as the colored file badges in Google
- * Drive, Office and the system share sheet: a PDF reads red, a spreadsheet green, regardless of
- * app theme or dark/light mode. [color] is a fixed brand color, not a `MaterialTheme.colorScheme`
- * role — PvotLib's "tokens, not literals" rule is for UI chrome, and has no role for a file type;
- * [PvotExtendedColors][com.prauga.pvot.designsystem.theme.PvotExtendedColors] only covers success
- * and warning. [Other] is the one exception, reading the theme's primary so an unrecognized type
- * still looks like the rest of the app rather than carrying its own made-up color.
+ * [color] is a fixed per-type color, not a `MaterialTheme.colorScheme` role, so a PDF reads red in
+ * any theme; the theme has no role for a file type. [Other] uses the theme's primary instead.
  */
 enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
     Pdf(R.color.document_kind_pdf),
@@ -29,7 +24,6 @@ enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
     @Composable
     fun color(): Color = colorRes?.let { colorResource(it) } ?: MaterialTheme.colorScheme.primary
 
-    /** The label a filter chip shows for this kind, such as on the Recent tab. */
     val labelRes: Int
         get() = when (this) {
             Pdf -> R.string.document_kind_pdf
@@ -42,8 +36,7 @@ enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
         }
 }
 
-/** [DocumentKind] for a document, read from its file extension — more reliable than [mimeType],
- * which a provider sometimes reports as the generic `application/octet-stream`. */
+/** Extension first: a provider sometimes reports [mimeType] as `application/octet-stream`. */
 fun documentKind(name: String, mimeType: String): DocumentKind =
     when (name.substringAfterLast('.', missingDelimiterValue = "").lowercase()) {
         "pdf" -> DocumentKind.Pdf

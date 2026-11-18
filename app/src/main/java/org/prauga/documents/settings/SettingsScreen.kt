@@ -32,10 +32,6 @@ import org.prauga.documents.BuildConfig
 import org.prauga.documents.R
 import org.prauga.documents.settings.data.AppSettings
 
-/**
- * Appearance and about. The glass slider and view mode are real; everything else earns its place
- * only once the feature behind it exists (see CLAUDE.md "Open items").
- */
 @Composable
 fun SettingsScreen(
     state: LazyListState,
@@ -110,8 +106,7 @@ private fun SettingsContent(
                     PvotSwitchRow(
                         title = stringResource(R.string.settings_autosave_title),
                         summary = stringResource(R.string.settings_autosave_summary),
-                        // A document opened before this is ever shown defaults to the common
-                        // choice; the switch pins it explicitly the first time it's touched.
+                        // Null until first chosen; shown as on until the switch pins it.
                         checked = settings.autosaveOpenedDocuments ?: true,
                         onCheckedChange = { onEvent(SettingsEvent.AutosaveOpenedDocuments(it)) }
                     )
@@ -141,10 +136,7 @@ private fun SettingsContent(
     }
 }
 
-/**
- * The strength of liquid glass through the app, as a labeled slider over
- * [PvotGlassDefaults.maxIntensity]: the device's own cap, which is 0 wherever it cannot blur.
- */
+/** [PvotGlassDefaults.maxIntensity] is the device's own cap, 0 wherever it cannot blur. */
 @Composable
 private fun GlassIntensityCard(
     intensity: Float,
@@ -206,7 +198,6 @@ private fun glassSubtitleRes(): Int = when {
     else -> R.string.settings_glass_subtitle_flat
 }
 
-/** The name of each stop of the glass slider, from the cheapest to the full effect. */
 @StringRes
 private fun glassLabelRes(intensity: Float): Int = when {
     intensity <= PvotGlassDefaults.SolidIntensity -> R.string.settings_glass_solid

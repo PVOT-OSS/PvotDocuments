@@ -15,9 +15,6 @@ import com.prauga.pvot.designsystem.components.PvotScreen
 import com.prauga.pvot.designsystem.components.PvotScreenDefaults
 import org.prauga.documents.R
 
-// Phase 0 placeholder: Tools fills in with the scanner (phase 5) and PDF/conversion tools
-// (phase 4). Recent has its own screen now: RecentScreen.kt. Manage has its own: ManageScreen.kt.
-
 @Composable
 fun ToolsScreen(state: LazyListState, topPadding: Dp, modifier: Modifier = Modifier) {
     EmptyTab(state, topPadding, R.drawable.ic_tools, stringResource(R.string.tools_empty), modifier)

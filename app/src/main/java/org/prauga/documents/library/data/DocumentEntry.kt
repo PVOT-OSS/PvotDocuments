@@ -2,8 +2,7 @@ package org.prauga.documents.library.data
 
 import android.net.Uri
 
-/** A document found in one of the folders the user added, as listed by the Storage Access
- * Framework. Nothing here is read from the file's content; opening and parsing it is phase 2. */
+/** Metadata as the provider reports it; nothing here is read from the file's content. */
 data class DocumentEntry(
     val uri: Uri,
     val name: String,

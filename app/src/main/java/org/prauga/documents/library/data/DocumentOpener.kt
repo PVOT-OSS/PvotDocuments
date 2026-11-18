@@ -4,11 +4,7 @@ import org.prauga.documents.common.ViewerTarget
 import org.prauga.documents.common.viewerFormat
 import javax.inject.Inject
 
-/**
- * Gets a [DocumentEntry] ready for the viewer and records it at the top of the recent documents,
- * wherever it was opened from. A format without a viewer, or a document the app can't read, is
- * not recorded.
- */
+/** Records the document at the top of recents unless it has no viewer or can't be read. */
 class DocumentOpener @Inject constructor(
     private val documentsRepository: DocumentsRepository,
     private val libraryRepository: LibraryRepository,

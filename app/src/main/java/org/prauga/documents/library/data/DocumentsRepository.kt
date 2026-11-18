@@ -18,26 +18,21 @@ import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Reads folders and documents through the Storage Access Framework. Every call is a live query
- * against the provider, not a cache: a tree the user already granted still needs its own read on
- * every call, which is why each one is a suspend function off the main thread.
- */
+/** Every call is a live query against the SAF provider, not a cache, run off the main thread. */
 @Singleton
 class DocumentsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     @IoDispatcher private val io: CoroutineDispatcher,
 ) {
 
-    /** [treeUri] as a [FolderEntry], or null if it can no longer be opened (such as a removed SD
-     * card or a folder the user revoked access to outside the app). */
+    /** Null if the tree can't be opened anymore (a removed SD card, access revoked elsewhere). */
     suspend fun folder(treeUri: Uri): FolderEntry? = withContext(io) {
         val tree = DocumentFile.fromTreeUri(context, treeUri) ?: return@withContext null
         if (!tree.exists()) return@withContext null
         FolderEntry(treeUri = treeUri, displayName = tree.name ?: treeUri.lastPathSegment.orEmpty())
     }
 
-    /** The files directly inside [treeUri], not its subfolders; phase 1 is one level deep. */
+    /** The files directly inside [treeUri], not its subfolders. */
     suspend fun documentsIn(treeUri: Uri): List<DocumentEntry> = withContext(io) {
         val tree = DocumentFile.fromTreeUri(context, treeUri) ?: return@withContext emptyList()
         tree.listFiles()
@@ -53,20 +48,13 @@ class DocumentsRepository @Inject constructor(
             }
     }
 
-    /**
-     * [uri]'s content, decoded as UTF-8 text. Throws if the document can't be read or isn't
-     * actually text — the viewer turns that into [com.prauga.pvot.coreui.UiState.Error].
-     */
+    /** Decodes as UTF-8. Throws if the document can't be read. */
     suspend fun readText(uri: Uri): String = withContext(io) {
         val stream = context.contentResolver.openInputStream(uri) ?: throw FileNotFoundException()
         stream.use { it.readBytes().toString(Charsets.UTF_8) }
     }
 
-    /**
-     * [uri] as a single document (not a tree), such as one received through "Open with" or
-     * "Share". Null if it no longer resolves — a one-time grant from the sending app that has
-     * since expired, for example.
-     */
+    /** Null if [uri] no longer resolves, such as an expired one-time grant from the sending app. */
     suspend fun documentInfo(uri: Uri): DocumentEntry? = withContext(io) {
         val doc = runCatching { DocumentFile.fromSingleUri(context, uri) }.onFailure { Timber.w("Could not resolve a document: %s", it.javaClass.name) }.getOrNull()
             ?: return@withContext null
@@ -80,24 +68,20 @@ class DocumentsRepository @Inject constructor(
         )
     }
 
-    /** Whether [uri]'s content can actually be opened for reading right now. */
     suspend fun canRead(uri: Uri): Boolean = withContext(io) {
         runCatching { context.contentResolver.openInputStream(uri)?.use { true } ?: false }
             .onFailure { Timber.w("Could not open a document: %s", it.javaClass.name) }
             .getOrDefault(false)
     }
 
-    /** [uri]'s MIME type as its provider reports it, or an empty string when it doesn't. */
     suspend fun mimeType(uri: Uri): String = withContext(io) {
         context.contentResolver.getType(uri).orEmpty()
     }
 
     /**
-     * [document]'s URI, safe to hand to another component (an intent, a viewer). A document from
-     * an added folder is already a `content://` URI the app holds a grant on; an autosaved copy is
-     * a plain `file://` one, which isn't safe to put in an Intent — [FileProvider] turns it into a
-     * `content://` URI scoped to just that file instead. Null for a `file://` URI outside the
-     * app's own storage, which it can neither read nor share without a storage permission.
+     * A URI safe to put in an Intent: a `file://` own copy goes through [FileProvider] as a
+     * `content://` URI scoped to that file. Null for a `file://` URI outside the app's own storage,
+     * which it can neither read nor share without a storage permission.
      */
     suspend fun readableUri(document: DocumentEntry): Uri? = withContext(io) {
         if (document.uri.scheme != "file") return@withContext document.uri
@@ -109,17 +93,12 @@ class DocumentsRepository @Inject constructor(
     }
 
     /**
-     * Copies [uri] into the app's own storage, under `filesDir/opened/`, so it survives after a
-     * transient grant from the sending app expires. Returns a [DocumentEntry] pointing at the
-     * copy, named [displayName].
+     * Copies [uri] under `filesDir/opened/` so it survives after a transient grant expires.
      *
-     * If an earlier copy of the same document is already there, that copy is returned instead
-     * of writing another one, so repeated "Open with" of one file keeps one copy and one URI.
-     * "Same document" means same file name, same size and same SHA-256 of the content: name and
-     * size are a free first filter, and the hash is only computed when they already match, so a
-     * different file that happens to share both still gets its own copy. When several old copies
-     * match (duplicates written by earlier builds), one in [preferredUris] (what Recent already
-     * points at) wins, then the newest; the others are left as they are.
+     * An earlier copy with the same name, size and SHA-256 is reused instead, so repeated
+     * "Open with" of one file keeps one copy and one URI; the hash is only computed when name and
+     * size already match. When several old copies match (duplicates written by earlier builds),
+     * one in [preferredUris] wins, then the newest; the others are left as they are.
      */
     suspend fun copyToAppStorage(
         uri: Uri,
@@ -129,8 +108,6 @@ class DocumentsRepository @Inject constructor(
         existingOpenedCopy(uri, displayName, preferredUris)
             ?: copyIntoOwnStorage(uri, displayName, OpenedDirName)
 
-    /** An existing copy under `filesDir/opened/` with [uri]'s name, size and content, if any.
-     * Reads [uri] once, and only when a copy with the same name and size exists. */
     private suspend fun existingOpenedCopy(
         uri: Uri,
         displayName: String,
@@ -185,10 +162,8 @@ class DocumentsRepository @Inject constructor(
     }
 
     /**
-     * Moves [document] out of its folder and into `filesDir/trash/`: copies it there, then
-     * deletes the original. Null if either step fails, in which case nothing changed — a partial
-     * copy is removed, and a copy whose original couldn't be deleted is rolled back rather than
-     * left as a duplicate.
+     * Copies [document] into `filesDir/trash/`, then deletes the original. Null if either step
+     * fails; a copy whose original couldn't be deleted is removed rather than left as a duplicate.
      */
     suspend fun moveToTrash(document: DocumentEntry): DocumentEntry? {
         val copy = copyIntoOwnStorage(document.uri, document.name, TrashDirName) ?: return null
@@ -204,11 +179,7 @@ class DocumentsRepository @Inject constructor(
         return copy
     }
 
-    /**
-     * Writes [trashed]'s copy back into [folderTreeUri] as a new document, then removes it from
-     * trash. False if the folder no longer resolves (removed, or access revoked outside the app)
-     * or the write fails; the trash copy is left in place either way, so nothing is lost.
-     */
+    /** Writes [trashed] back into [folderTreeUri]; on any failure the trash copy is kept. */
     suspend fun restoreFromTrash(trashed: DocumentEntry, folderTreeUri: Uri): Boolean =
         withContext(io) {
             val tree = DocumentFile.fromTreeUri(context, folderTreeUri) ?: return@withContext false
@@ -230,14 +201,12 @@ class DocumentsRepository @Inject constructor(
             written
         }
 
-    /** Deletes [trashed]'s copy for good. */
     suspend fun deleteForever(trashed: DocumentEntry) =
         withContext(io) { deleteOwnCopy(trashed.uri) }
 
     /**
-     * Renames [document] to [newName]. Some providers change a document's URI on rename rather
-     * than keeping it, so this reports success only — the caller re-lists its folder afterward
-     * instead of trying to track the new URI itself.
+     * Some providers change a document's URI on rename, so this reports success only and the
+     * caller re-lists the folder instead of tracking the new URI.
      */
     suspend fun renameDocument(document: DocumentEntry, newName: String): Boolean =
         withContext(io) {
@@ -250,11 +219,7 @@ class DocumentsRepository @Inject constructor(
             }.onFailure { Timber.w("Could not rename a document: %s", it.javaClass.name) }.getOrDefault(false)
         }
 
-    /**
-     * Creates a new, empty document named [name] (with [extension] appended if [name] doesn't
-     * already end with it) directly inside [folderTreeUri]. Only plain-text formats — what Phase 1
-     * can honestly create without a real DOCX/XLSX writer, which is Phase 3/4 work.
-     */
+    /** Creates an empty file; only plain-text formats, since there is no DOCX/XLSX writer. */
     suspend fun createTextDocument(
         folderTreeUri: Uri,
         name: String,
@@ -284,9 +249,8 @@ class DocumentsRepository @Inject constructor(
         )
     }
 
-    /** Copies [uri] into its own timestamped subfolder under `filesDir/$baseDirName/`, so the file
-     * on disk keeps [displayName] exactly rather than a deduplicating prefix — the name shared
-     * back out through `FileProvider` reads from the file, not from [DocumentEntry.name]. */
+    /** A timestamped subfolder per copy keeps [displayName] exact on disk, since `FileProvider`
+     * shares the file's own name, not [DocumentEntry.name]. */
     private suspend fun copyIntoOwnStorage(
         uri: Uri,
         displayName: String,
@@ -315,7 +279,7 @@ class DocumentsRepository @Inject constructor(
 
     private fun safeFileName(displayName: String) = displayName.ifBlank { "document" }
 
-    /** Deletes a `file://` URI from [copyIntoOwnStorage], and its now-empty subfolder. */
+    /** Also deletes the now-empty subfolder. */
     private fun deleteOwnCopy(uri: Uri) {
         val path = uri.path ?: return
         val file = File(path)

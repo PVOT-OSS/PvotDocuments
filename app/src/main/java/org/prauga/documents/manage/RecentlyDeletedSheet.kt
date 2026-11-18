@@ -21,11 +21,7 @@ import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
 import org.prauga.documents.library.data.TrashedDocument
 
-/**
- * Documents moved out of their folder by the trash button in Manage. Restoring writes a copy back
- * into the original folder, which only works while that folder is still one the user has added;
- * deleting here is for good, with no further undo.
- */
+/** Restoring only works while the original folder is still added; deleting here is for good. */
 @Composable
 fun RecentlyDeletedSheet(
     documents: List<TrashedDocument>,

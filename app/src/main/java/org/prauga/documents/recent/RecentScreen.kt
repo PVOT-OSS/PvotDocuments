@@ -32,11 +32,7 @@ import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
 import org.prauga.documents.tools.EmptyTab
 
-/**
- * Documents the app was opened or shared with, most recent first, filterable by type — see
- * [org.prauga.documents.incoming.IncomingDocumentHandler]. Tapping one opens it if its format
- * has a viewer; [onMessage] reports when it doesn't.
- */
+/** [onMessage] reports a document with no viewer for its format. */
 @Composable
 fun RecentScreen(
     state: LazyListState,

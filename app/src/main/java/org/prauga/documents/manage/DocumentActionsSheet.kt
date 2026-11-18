@@ -9,7 +9,6 @@ import com.prauga.pvot.designsystem.components.PvotSheetItem
 import org.prauga.documents.R
 import org.prauga.documents.library.data.DocumentEntry
 
-/** Share, rename, select or delete [document], as one menu rather than icons crowding its row. */
 @Composable
 fun DocumentActionsSheet(
     document: DocumentEntry,
