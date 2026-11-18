@@ -1,10 +1,8 @@
 package org.prauga.documents.formats.slides
 
-/** Something drawn on a slide, in drawing order. */
 sealed interface SlideShape {
     val frame: SlideFrame
 
-    /** A shape with an outline, a fill, and optionally text inside. */
     data class Shape(
         override val frame: SlideFrame,
         val geometry: SlideGeometry,

@@ -33,7 +33,6 @@ internal class XmlNode(val name: String, private val attributes: Map<String, Str
         return null
     }
 
-    /** All the text inside, in order. */
     fun allText(): String = if (name == TEXT) text else children.joinToString("") { it.allText() }
 
     companion object {

@@ -15,13 +15,7 @@ import java.io.File
 import java.util.zip.ZipFile
 
 /**
- * A PowerPoint `.pptx` read for viewing into a [Presentation]: each visible slide with its
- * background and shapes laid out where they sit, resolved through its layout, master and theme —
- * placeholders take their position and text style from the layout and master, colors map through
- * the master's color map, and shapes without their own fill or outline take the theme's. Text
- * keeps its fonts sizes, bold, italic, underline, strike, colors, alignment, bullets and
- * numbering, spacing, and PowerPoint's shrink-to-fit. Pictures (cropped), groups and tables are
- * drawn; charts, SmartArt, video and animations are not.
+ * Charts, SmartArt, video and animations are not drawn.
  *
  * [file] must be a private copy: the [Presentation] keeps it to read pictures from, and deletes
  * it when closed.
@@ -34,7 +28,7 @@ fun parsePptx(file: File): Presentation {
 /** EMU (English Metric Units: 914,400 to the inch, 12,700 to the point) to points. */
 private fun emu(value: String?): Float? = value?.toLongOrNull()?.let { it / 12_700f }
 
-/** A part's XML, its relationships (by id, resolved to part paths), and the part's path. */
+/** [rels] are keyed by relationship id, with targets resolved to part paths. */
 private class Part(val path: String, val xml: XmlNode, val rels: Map<String, Rel>)
 
 private class Rel(val target: String, val external: Boolean, val type: String)
@@ -118,7 +112,6 @@ private fun SlideText.withNumber(n: Int) = copy(
 /** Stands in for a slide-number field until the slide's number is known. */
 private const val SlideNumberMark = "\u0000#"
 
-/** Resolves one slide against its layout, master and theme. */
 private class SlideBuilder(private val reader: PptxReader, private val slide: Part, private val defaultText: XmlNode?) {
     private val layout: Part? = slide.rels.values.firstOrNull { it.type.endsWith("/slideLayout") }?.let { reader.part(it.target) }
     private val master: Part? = layout?.rels?.values?.firstOrNull { it.type.endsWith("/slideMaster") }?.let { reader.part(it.target) }
@@ -158,8 +151,6 @@ private class SlideBuilder(private val reader: PptxReader, private val slide: Pa
         }
         return null
     }
-
-    // ---- colors ----
 
     /** The color element inside [parent] (solidFill, a color reference...), resolved to ARGB. */
     fun color(parent: XmlNode?): Int? {
@@ -219,8 +210,6 @@ private class SlideBuilder(private val reader: PptxReader, private val slide: Pa
         if (spPr.child("a:noFill") != null) return NoFill
         return null
     }
-
-    // ---- shape tree ----
 
     private fun tree(part: Part, decorationsOnly: Boolean): List<SlideShape> {
         val root = part.xml.at("p:cSld", "p:spTree") ?: return emptyList()
@@ -305,7 +294,6 @@ private class SlideBuilder(private val reader: PptxReader, private val slide: Pa
             }
         }
 
-        /** Which of the master's text styles applies. */
         val textStyle: String = when (type) {
             "title", "ctrTitle" -> "p:titleStyle"
             "body", "subTitle", "obj" -> "p:bodyStyle"
@@ -420,8 +408,6 @@ private class SlideBuilder(private val reader: PptxReader, private val slide: Pa
         }
         return SlideShape.Table(frame, widths, heights, cells)
     }
-
-    // ---- text ----
 
     private fun anchor(value: String?): SlideTextAnchor? = when (value) {
         "t" -> SlideTextAnchor.Top

@@ -7,10 +7,6 @@ import java.io.InputStream
 import java.util.zip.ZipFile
 
 /**
- * An OpenDocument text file (`.odt`, a zip with the body in `content.xml` and named styles in
- * `styles.xml`) read for viewing into a [RichDocument]: paragraphs and headings with their styles
- * resolved through style inheritance, numbered and bulleted lists, tables (spans, covered cells,
- * fills), images and text boxes in frames, links, sections, tables of contents, and page breaks.
  * Notes and comments aren't shown.
  *
  * [file] must be a private copy: the [RichDocument] keeps it to read images from, and deletes it

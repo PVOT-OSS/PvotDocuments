@@ -13,9 +13,8 @@ private fun isRuleLine(line: String): Boolean {
     return chars.all { it == marker }
 }
 
-/** [text] split into [MarkdownBlock]s: headings, paragraphs (consecutive plain lines joined with a
- * space), list items, fenced code blocks, blockquotes and horizontal rules. Nothing beyond this —
- * nested lists, tables and images aren't block types the renderer needs yet. */
+/** Consecutive plain lines join into one paragraph with a space. Nested lists, tables and images
+ * aren't parsed as blocks. */
 fun parseMarkdown(text: String): List<MarkdownBlock> {
     val blocks = mutableListOf<MarkdownBlock>()
     val lines = text.lines()

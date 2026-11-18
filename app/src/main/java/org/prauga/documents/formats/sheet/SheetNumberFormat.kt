@@ -21,10 +21,8 @@ internal val BuiltInNumberFormats: Map<Int, String> = mapOf(
 )
 
 /**
- * [value] as a spreadsheet would show it under number format [code]: the common cases of Excel's
- * format language — General, fixed decimals, thousands separators, percentages, scientific,
- * currency symbols and literal text, and dates and times. Fractions and conditions fall back to
- * General rather than guessing. [date1904] is the workbook's date system.
+ * Fractions and conditions fall back to General rather than guessing. [date1904] is the
+ * workbook's date system.
  */
 fun formatSheetNumber(value: Double, code: String, date1904: Boolean = false): String {
     if (code.isBlank() || code.equals("General", ignoreCase = true)) return generalNumber(value)

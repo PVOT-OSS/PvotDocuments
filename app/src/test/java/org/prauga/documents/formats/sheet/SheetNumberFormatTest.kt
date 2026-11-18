@@ -67,7 +67,6 @@ class SheetNumberFormatTest {
         assertEquals("2023-03-15", formatSheetNumber(45000.0, "yyyy-mm-dd"))
         assertEquals("March 15, 2023", formatSheetNumber(45000.0, "mmmm d, yyyy"))
         assertEquals("Wed", formatSheetNumber(45000.0, "ddd"))
-        // A quarter past six in the evening.
         assertEquals("18:15", formatSheetNumber(45000.0 + 18.25 / 24, "h:mm"))
         assertEquals("6:15 PM", formatSheetNumber(45000.0 + 18.25 / 24, "h:mm AM/PM"))
         assertEquals("18:15:00", formatSheetNumber(45000.0 + 18.25 / 24, "hh:mm:ss"))

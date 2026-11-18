@@ -7,11 +7,8 @@ import java.io.InputStream
 import java.util.zip.ZipFile
 
 /**
- * An OpenDocument spreadsheet (`.ods`, a zip with the sheets in `content.xml`) read for viewing.
  * OpenDocument stores each cell's displayed text alongside its value, so numbers and dates show
- * exactly as LibreOffice formatted them. Cell styles (bold, italic, colors, fill, alignment,
- * wrapping), column widths, hidden rows and columns, and merged cells are kept; charts, images and
- * notes are not.
+ * exactly as LibreOffice formatted them. Charts, images and notes aren't read.
  */
 fun parseOds(file: File): Workbook = ZipFile(file).use { zip ->
     val content = zip.getEntry("content.xml") ?: error("Not an OpenDocument spreadsheet")
@@ -69,7 +66,6 @@ private fun readContent(input: InputStream): Workbook {
     var truncated = false
     var cellBudget = MaxCells
 
-    // Sheet being read.
     var sheetName = ""
     var sheetHidden = false
     var rows = ArrayList<SheetRow>()
@@ -80,14 +76,12 @@ private fun readContent(input: InputStream): Workbook {
     var nextColumn = 0
     var rowIndex = 0
 
-    // Row being read.
     var rowRepeat = 1
     var rowHidden = false
     var rowHeightPt: Float? = null
     var cells = ArrayList<SheetCell>()
     var col = 0
 
-    // Cell being read.
     var cellRepeat = 1
     var cellStyle = 0
     var cellNumeric = false

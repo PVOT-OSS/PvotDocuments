@@ -16,12 +16,8 @@ import java.io.File
 import java.util.zip.ZipFile
 
 /**
- * An OpenDocument presentation (`.odp`) read for viewing into a [Presentation]: each visible
- * slide's background and shapes where they sit — text frames (titles, outlines, text boxes),
- * pictures, rectangles, ellipses and other custom shapes, lines, groups and tables — with fills,
- * outlines and text styles resolved through the style hierarchy, so placeholders take their sizes
- * from the master's presentation styles. Decorations on the master page are drawn behind each
- * slide. Charts, embedded objects, notes and animations are not.
+ * Decorations on the master page are drawn behind each slide. Charts, embedded objects, notes and
+ * animations are not drawn.
  *
  * [file] must be a private copy: the [Presentation] keeps it to read pictures from, and deletes
  * it when closed.
@@ -238,8 +234,6 @@ private class OdpReader(private val content: XmlNode, private val stylesXml: Xml
         val rowHeight = if (rows.isEmpty()) frame.height else frame.height / rows.size
         return SlideShape.Table(frame, List(columns) { frame.width / columns }, List(rows.size) { rowHeight }, cells)
     }
-
-    // ---- text ----
 
     private fun text(container: XmlNode, frameStyle: String?, number: Int, outline: Boolean): SlideText {
         val paragraphs = ArrayList<SlideParagraph>()

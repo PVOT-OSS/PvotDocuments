@@ -1,8 +1,7 @@
 package org.prauga.documents.formats.markdown
 
-/** A line-level piece of a Markdown document. Parsed once up front, then rendered by whatever UI
- * wants to show it — [text] in every variant still carries inline markers (`**bold**`, links, ...)
- * for the renderer to style. */
+/** [text] in every variant still carries inline markers (`**bold**`, links, ...) for the renderer
+ * to style. */
 sealed interface MarkdownBlock {
     data class Heading(val level: Int, val text: String) : MarkdownBlock
     data class Paragraph(val text: String) : MarkdownBlock

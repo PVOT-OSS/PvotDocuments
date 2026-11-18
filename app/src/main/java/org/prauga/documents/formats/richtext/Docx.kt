@@ -7,12 +7,8 @@ import java.io.InputStream
 import java.util.zip.ZipFile
 
 /**
- * A `.docx` (a zip of WordprocessingML parts) read for viewing into a [RichDocument]: paragraphs
- * with their styles resolved (headings, alignment, bold, italic, underline, strike, colors,
- * highlighting, sizes, superscript and subscript), numbered and bulleted lists, tables (with
- * spans, merged rows and fills), images, links (including Word's HYPERLINK fields), text boxes,
- * and page breaks. Tracked insertions show; tracked deletions don't. Footnotes, headers, footers
- * and comments aren't read.
+ * Tracked insertions show; tracked deletions don't. Footnotes, headers, footers and comments
+ * aren't read.
  *
  * [file] must be a private copy: the [RichDocument] keeps it to read images from, and deletes it
  * when closed.
@@ -47,7 +43,6 @@ private fun XmlPullParser.attr(name: String): String? {
 /** `w:val` as a toggle: present without a value, or anything but "0"/"false"/"none", is on. */
 private fun XmlPullParser.isOn(): Boolean = attr("w:val").let { it == null || (it != "0" && it != "false" && it != "none") }
 
-/** Skips the element the parser is on, children and all. */
 private fun XmlPullParser.skipElement() {
     var depth = 1
     while (depth > 0) {

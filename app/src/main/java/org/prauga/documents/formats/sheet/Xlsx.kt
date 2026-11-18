@@ -7,11 +7,8 @@ import java.io.InputStream
 import java.util.zip.ZipFile
 
 /**
- * An `.xlsx` workbook (a zip of SpreadsheetML parts) read for viewing: each visible sheet's cell
- * values as Excel last saved and displayed them, number formats applied, with the cell styling a
- * reader needs — bold, italic, colors, fills, alignment, wrapping — plus column widths, hidden rows
- * and columns, and merged cells. Formulas aren't recalculated: Excel stores each formula's last
- * result next to it, and that's what shows. Charts, images and comments aren't read.
+ * Formulas aren't recalculated: Excel stores each formula's last result next to it, and that's
+ * what shows. Charts, images and comments aren't read.
  *
  * [file] must be a local copy: the parts sit in no fixed order in the zip (shared strings often
  * come after the sheets that use them), so it's read by random access.
@@ -178,11 +175,8 @@ private fun readStyles(input: InputStream, theme: List<Int>): XlsxStyles {
     val formats = ArrayList<String>()
 
     var section = ""
-    // Font being read.
     var bold = false; var italic = false; var underline = false; var strike = false; var fontColor: Int? = null
-    // Fill being read.
     var solid = false; var fillColor: Int? = null
-    // Cell format being read.
     var xfFormat = 0; var xfFont = 0; var xfFill = 0; var align = CellAlign.Auto; var wrap = false
 
     while (p.next() != XmlPullParser.END_DOCUMENT) {
@@ -294,7 +288,6 @@ private fun readWorksheet(
     var rowHeight: Float? = null
     var cells = ArrayList<SheetCell>()
     var nextCol = 0
-    // Cell being read.
     var cellCol = 0; var cellType = "n"; var cellStyle = 0
     val value = StringBuilder()
     var inValue = false
