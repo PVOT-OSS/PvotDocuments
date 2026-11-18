@@ -66,7 +66,7 @@ fun parseMarkdown(text: String): List<MarkdownBlock> {
 
             HeadingRegex.matches(line) -> {
                 flushParagraph()
-                val match = HeadingRegex.find(line)!!
+                val match = checkNotNull(HeadingRegex.find(line))
                 blocks.add(MarkdownBlock.Heading(match.groupValues[1].length, match.groupValues[2].trim()))
             }
 
@@ -77,14 +77,14 @@ fun parseMarkdown(text: String): List<MarkdownBlock> {
 
             OrderedListRegex.matches(line) -> {
                 flushParagraph()
-                val content = OrderedListRegex.find(line)!!.groupValues[1]
+                val content = checkNotNull(OrderedListRegex.find(line)).groupValues[1]
                 blocks.add(MarkdownBlock.ListItem(ordered = true, number = orderedCounter, text = content))
                 orderedCounter++
             }
 
             UnorderedListRegex.matches(line) -> {
                 flushParagraph()
-                val content = UnorderedListRegex.find(line)!!.groupValues[1]
+                val content = checkNotNull(UnorderedListRegex.find(line)).groupValues[1]
                 blocks.add(MarkdownBlock.ListItem(ordered = false, number = null, text = content))
             }
 

@@ -142,19 +142,22 @@ private fun inlineMarkdown(line: String, linkColor: Color): AnnotatedString = bu
     for (match in InlineRegex.findAll(line)) {
         if (match.range.first > last) append(line.substring(last, match.range.first))
         val groups = match.groups
+        val bold = groups[1] ?: groups[2]
+        val code = groups[3]
+        val linkText = groups[4]
+        val linkUrl = groups[5]
+        val italic = groups[6] ?: groups[7]
         when {
-            groups[1] != null -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(groups[1]!!.value) }
-            groups[2] != null -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(groups[2]!!.value) }
-            groups[3] != null -> withStyle(
+            bold != null -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(bold.value) }
+            code != null -> withStyle(
                 SpanStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp)
-            ) { append(groups[3]!!.value) }
-            groups[4] != null -> withLink(LinkAnnotation.Url(groups[5]!!.value)) {
+            ) { append(code.value) }
+            linkText != null && linkUrl != null -> withLink(LinkAnnotation.Url(linkUrl.value)) {
                 withStyle(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)) {
-                    append(groups[4]!!.value)
+                    append(linkText.value)
                 }
             }
-            groups[6] != null -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(groups[6]!!.value) }
-            groups[7] != null -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(groups[7]!!.value) }
+            italic != null -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(italic.value) }
         }
         last = match.range.last + 1
     }

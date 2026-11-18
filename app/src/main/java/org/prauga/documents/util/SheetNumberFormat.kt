@@ -28,7 +28,7 @@ internal val BuiltInNumberFormats: Map<Int, String> = mapOf(
  */
 fun formatSheetNumber(value: Double, code: String, date1904: Boolean = false): String {
     if (code.isBlank() || code.equals("General", ignoreCase = true)) return generalNumber(value)
-    val compiled = compiledCodes.get()!!.getOrPut(code) { splitSections(code).map(::cleanSection) }
+    val compiled = compiledCodes.get().getOrPut(code) { splitSections(code).map(::cleanSection) }
     // Up to four sections: positive; negative; zero; text. A negative value in its own section
     // shows without its sign — the section carries its own, or parentheses.
     val (cleaned, shown) = when {
@@ -194,7 +194,7 @@ private fun formatPattern(value: Double, text: String, negativeSign: Boolean): S
 private val decimalFormats = ThreadLocal.withInitial { HashMap<String, DecimalFormat>() }
 
 private fun decimalFormat(pattern: String): DecimalFormat =
-    decimalFormats.get()!!.getOrPut(pattern) {
+    decimalFormats.get().getOrPut(pattern) {
         DecimalFormat(pattern, DecimalFormatSymbols.getInstance(Locale.getDefault()))
             .apply { roundingMode = java.math.RoundingMode.HALF_UP }
     }
