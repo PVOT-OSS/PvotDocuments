@@ -110,6 +110,7 @@
     <string name="manage_new_create">Create</string>
     <string name="manage_new_created">Created</string>
     <string name="manage_new_create_failed">Couldn\'t create this file</string>
+    <string name="manage_new_untitled">Untitled</string>
     <string name="manage_rename_title">Rename document</string>
     <string name="manage_rename_cancel">Cancel</string>
     <string name="manage_rename_save">Save</string>

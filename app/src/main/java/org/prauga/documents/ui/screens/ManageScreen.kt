@@ -104,6 +104,7 @@ fun ManageScreen(
     val scanUnsupportedMessage = stringResource(R.string.manage_scan_unsupported)
     val createdMessage = stringResource(R.string.manage_new_created)
     val createFailedMessage = stringResource(R.string.manage_new_create_failed)
+    val untitledName = stringResource(R.string.manage_new_untitled)
 
     fun openDocument(document: DocumentEntry) {
         when (org.prauga.documents.util.openDocument(context, preferences, document)) {
@@ -164,7 +165,7 @@ fun ManageScreen(
         scope.launch {
             val created = repository.createTextDocument(
                 folderUri,
-                name.ifBlank { "Untitled" },
+                name.ifBlank { untitledName },
                 type.extension,
                 type.mimeType
             )
