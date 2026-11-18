@@ -15,6 +15,7 @@ import org.json.JSONObject
 import org.prauga.documents.common.ViewerFormat
 import org.prauga.documents.common.coroutines.IoDispatcher
 import org.prauga.documents.formats.csv.parseCsv
+import org.prauga.documents.formats.epub.parseEpub
 import org.prauga.documents.formats.richtext.parseDocx
 import org.prauga.documents.formats.richtext.parseOdt
 import org.prauga.documents.formats.sheet.parseOds
@@ -54,6 +55,7 @@ class DocumentLoader @Inject constructor(
         ViewerFormat.Spreadsheet -> ViewerContent.Spreadsheet(withContext(io) { readWorkbook(uri) })
         ViewerFormat.Slides -> ViewerContent.Slides(withContext(io) { readPresentation(uri) })
         ViewerFormat.Docx, ViewerFormat.Odt -> ViewerContent.RichText(withContext(io) { readRichDocument(uri) })
+        ViewerFormat.Epub -> ViewerContent.RichText(withContext(io) { readEpub(uri) })
         ViewerFormat.Binary -> readUnknown(uri)
     }
 
@@ -113,6 +115,8 @@ class DocumentLoader @Inject constructor(
             if (isWord) parseDocx(temp) else parseOdt(temp)
         }
     }
+
+    private fun readEpub(uri: Uri) = copyToTemp(uri, "book").let { temp -> parseOrDelete(temp) { parseEpub(temp) } }
 
     private fun <T : Any> parseOrDelete(temp: File, parse: () -> T): T {
         var parsed: T? = null

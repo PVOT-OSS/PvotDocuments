@@ -21,6 +21,7 @@ enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
     Spreadsheet(R.color.document_kind_spreadsheet),
     Presentation(R.color.document_kind_presentation),
     Html(R.color.document_kind_html),
+    Book(R.color.document_kind_book),
     PlainText(R.color.document_kind_text),
     Other(null);
 
@@ -34,6 +35,7 @@ enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
             Spreadsheet -> R.string.document_kind_spreadsheet
             Presentation -> R.string.document_kind_presentation
             Html -> R.string.document_kind_html
+            Book -> R.string.document_kind_book
             PlainText -> R.string.document_kind_text
             Other -> R.string.document_kind_other
         }
@@ -47,6 +49,7 @@ fun documentKind(name: String, mimeType: String): DocumentKind =
         "xls", "xlsx", "xlsm", "ods", "csv" -> DocumentKind.Spreadsheet
         "ppt", "pptx", "odp" -> DocumentKind.Presentation
         "html", "htm" -> DocumentKind.Html
+        "epub", "mobi", "azw3", "fb2" -> DocumentKind.Book
         "txt", "md", "markdown" -> DocumentKind.PlainText
         else -> mimeTypeKind(mimeType)
     }
@@ -61,6 +64,7 @@ private fun mimeTypeKind(mimeType: String): DocumentKind = when {
     mimeType.contains("presentationml") || mimeType == "application/vnd.ms-powerpoint" ||
         mimeType == "application/vnd.oasis.opendocument.presentation" -> DocumentKind.Presentation
     mimeType == "text/html" -> DocumentKind.Html
+    mimeType == "application/epub+zip" -> DocumentKind.Book
     mimeType.startsWith("text/") -> DocumentKind.PlainText
     else -> DocumentKind.Other
 }

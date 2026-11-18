@@ -5,6 +5,7 @@
     <color name="document_kind_spreadsheet">#FF34A853</color>
     <color name="document_kind_presentation">#FFD84315</color>
     <color name="document_kind_html">#FFFB8C00</color>
+    <color name="document_kind_book">#FF8E24AA</color>
     <color name="document_kind_text">#FF78909C</color>
     <color name="document_paper">#FFFFFFFF</color>
     <color name="document_paper_dark">#FF000000</color>

@@ -15,6 +15,7 @@ enum class ViewerFormat {
     Odt,
     Spreadsheet,
     Slides,
+    Epub,
     Binary,
 }
 
@@ -36,6 +37,7 @@ fun viewerFormat(name: String, mimeType: String): ViewerFormat {
         extension == "pdf" -> ViewerFormat.Pdf
         extension == "docx" -> ViewerFormat.Docx
         extension == "odt" -> ViewerFormat.Odt
+        extension == "epub" -> ViewerFormat.Epub
         extension == "pptx" || extension == "odp" -> ViewerFormat.Slides
         extension == "xlsx" || extension == "xlsm" || extension == "ods" -> ViewerFormat.Spreadsheet
         extension in CodeExtensions -> ViewerFormat.Code
@@ -46,6 +48,7 @@ fun viewerFormat(name: String, mimeType: String): ViewerFormat {
         mimeType == "application/pdf" -> ViewerFormat.Pdf
         mimeType.contains("wordprocessingml") -> ViewerFormat.Docx
         mimeType == "application/vnd.oasis.opendocument.text" -> ViewerFormat.Odt
+        mimeType == "application/epub+zip" -> ViewerFormat.Epub
         mimeType.contains("presentationml.presentation") ||
             mimeType == "application/vnd.oasis.opendocument.presentation" -> ViewerFormat.Slides
         mimeType.contains("spreadsheetml") || mimeType.equals("application/vnd.ms-excel.sheet.macroEnabled.12", ignoreCase = true) ||

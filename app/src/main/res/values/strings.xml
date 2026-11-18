@@ -70,6 +70,7 @@
     <string name="document_kind_spreadsheet">Spreadsheet</string>
     <string name="document_kind_presentation">Slides</string>
     <string name="document_kind_html">HTML</string>
+    <string name="document_kind_book">Book</string>
     <string name="document_kind_text">Text</string>
     <string name="document_kind_other">Other</string>
     <string name="tools_empty">Scan a document or convert a file to get started.</string>
