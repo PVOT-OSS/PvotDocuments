@@ -85,14 +85,20 @@ Each phase ends with something that runs and has been looked at on the phone.
 
 ## Layout
 
+Single `:app` module, Hilt, one ViewModel per screen (`StateFlow<UiState<…>>` + `onEvent`), packages
+by feature, one public type per file.
+
 ```
 app/src/main/java/org/prauga/documents/
-  MainActivity.kt         PvotBaseActivity, theme, glass intensity provider
-  AppPreferences.kt       SharedPreferences-backed settings, observable from Compose
-  ui/AppShell.kt          PvotScreenScaffold: top bar per tab, PvotNavBar, four tabs
-  ui/screens/             Recent, Tools, Manage (empty states for now), Settings
-  viewer/PdfView.kt       PDF viewer UI: scroll, pinch-zoom, search, selection
-  viewer/PdfiumDocument.kt  Pdfium access: rendering, text, search, on one serial dispatcher
+  DocumentsApplication.kt, MainActivity.kt, MainViewModel.kt
+  common/                 shared types, effects (open viewer, share, message), coroutines, preferences file
+  settings/  library/data/  repositories: settings, folders/recents/trash, SAF documents
+  home/ recent/ manage/ onboarding/ incoming/ tools/   screens with their ViewModels
+  viewer/                 DocumentViewerActivity/Screen/ViewModel; data/ loads documents, reading positions
+  viewer/pdf/             PdfView (scroll, zoom, search, selection), PdfiumDocument (one serial dispatcher)
+  viewer/sheet|slides|richtext|text/   the other viewers, given already-loaded content
+  formats/                own parsers: csv, markdown, xml, richtext (DOCX/ODT), sheet (XLSX/ODS), slides (PPTX/ODP)
+app/src/test/             unit tests; the XML-based parsers run on Robolectric against fixtures in resources/
 ```
 
 ## Toolchain
@@ -104,8 +110,9 @@ AGP 9.5.0, Kotlin 2.4.21, Java 21, Gradle 9.6.1, compile SDK 37.1, target SDK 36
 ## Commands
 
 ```
-export ANDROID_HOME=$HOME/Library/Android/sdk     # there is no local.properties
-./gradlew :app:assembleDebug :app:assembleRelease :app:lintDebug
+export ANDROID_HOME=$HOME/Android/Sdk              # or local.properties sdk.dir
+./gradlew :app:assembleDebug :app:assembleRelease :app:lintDebug :app:testDebugUnitTest
+reuse lint                                        # every file needs SPDX copyright and licence
 ./gradlew :app:installDebug                       # needs ANDROID_SERIAL if several devices
 ```
 
@@ -128,8 +135,9 @@ commit a keystore, a password file or `keystore.properties`.
 
 ## Licensing
 
-GPL-3.0 (`LICENSE`). Tabler icons (MIT) are credited in `THIRD_PARTY_NOTICES.md`, with the per-file
-comment kept in each vector drawable.
+GPL-3.0-or-later (`LICENSE`, `LICENSES/`), REUSE compliant: Kotlin files carry SPDX headers, other
+files are annotated in `REUSE.toml`. Tabler icons (MIT) are credited in `THIRD_PARTY_NOTICES.md`, with
+the SPDX comment kept in each vector drawable.
 
 ## Open items
 
