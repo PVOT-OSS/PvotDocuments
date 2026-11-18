@@ -267,7 +267,10 @@ class DocumentsRepository @Inject constructor(
                 target.outputStream().use { output -> input.copyTo(output) }
             } != null
         }.onFailure { Timber.w("Could not copy a document: %s", it.javaClass.name) }.getOrDefault(false)
-        if (!copied) return@withContext null
+        if (!copied) {
+            deleteOwnCopy(Uri.fromFile(target))
+            return@withContext null
+        }
         DocumentEntry(
             uri = Uri.fromFile(target),
             name = displayName,
