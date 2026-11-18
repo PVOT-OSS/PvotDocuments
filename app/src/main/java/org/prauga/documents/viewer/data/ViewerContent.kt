@@ -13,5 +13,5 @@ sealed interface ViewerContent {
     data class Spreadsheet(val workbook: Workbook) : ViewerContent
     data class Slides(val presentation: Presentation) : ViewerContent
     data class RichText(val document: RichDocument) : ViewerContent
-    data class Pdf internal constructor(internal val document: PdfiumDocument) : ViewerContent
+    class Pdf internal constructor(internal val document: PdfiumDocument) : ViewerContent
 }
