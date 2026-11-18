@@ -146,6 +146,7 @@ fun PdfViewOptionsSheet(
     onDarkPagesChange: (Boolean) -> Unit,
     onPages: () -> Unit,
     onGoToPage: () -> Unit,
+    onOpenElsewhere: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     PvotBottomSheet(visible = true, onDismissRequest = onDismiss) {
@@ -165,6 +166,15 @@ fun PdfViewOptionsSheet(
             onClick = {
                 onDismiss()
                 onGoToPage()
+            },
+        )
+        PvotSheetItem(
+            title = stringResource(R.string.viewer_open_elsewhere),
+            subtitle = stringResource(R.string.viewer_open_elsewhere_summary),
+            icon = { Icon(painterResource(R.drawable.ic_external_link), contentDescription = null) },
+            onClick = {
+                onDismiss()
+                onOpenElsewhere()
             },
         )
         PvotSwitchRow(

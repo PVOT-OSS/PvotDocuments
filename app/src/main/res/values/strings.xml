@@ -52,6 +52,9 @@
     <string name="viewer_pdf_password_wrong">Wrong password. Try again</string>
     <string name="viewer_pdf_password_open">Open</string>
     <string name="viewer_pdf_more">View options</string>
+    <string name="viewer_open_elsewhere">Open in another app</string>
+    <string name="viewer_open_elsewhere_summary">View or edit it with another app on this phone</string>
+    <string name="viewer_open_elsewhere_chooser">Open with</string>
     <string name="viewer_pdf_pages">Pages</string>
     <string name="viewer_pdf_pages_summary">All pages at a glance</string>
     <string name="viewer_pdf_go_to_summary">Jump to a page number</string>

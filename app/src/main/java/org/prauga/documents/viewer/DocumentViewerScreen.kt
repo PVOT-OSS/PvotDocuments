@@ -29,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -47,6 +48,7 @@ import com.prauga.pvot.designsystem.navigation.PvotTopBarAction
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import kotlinx.coroutines.flow.filterNotNull
 import org.prauga.documents.R
+import org.prauga.documents.common.ViewerFormat
 import org.prauga.documents.viewer.data.ReadingPosition
 import org.prauga.documents.viewer.data.ViewerContent
 import org.prauga.documents.viewer.pdf.DarkPageFilter
@@ -115,6 +117,9 @@ private fun DocumentViewerContent(
     var showGoToPage by remember { mutableStateOf(false) }
     var showContents by remember { mutableStateOf(false) }
     var showOptions by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val chooserTitle = stringResource(R.string.viewer_open_elsewhere_chooser)
+    val openInAnotherApp = { openElsewhere(context, viewer.uri, viewer.mimeType, chooserTitle) }
     if (showGoToPage) GoToPageDialog(pdfNavigation, onDismiss = { showGoToPage = false })
     if (showContents) PdfContentsSheet(pdfNavigation, onDismiss = { showContents = false })
     if (showOptions) {
@@ -123,6 +128,7 @@ private fun DocumentViewerContent(
             onDarkPagesChange = { onEvent(DocumentViewerEvent.DarkPdfPages(it)) },
             onPages = { pdfNavigation.overviewOpen = true },
             onGoToPage = { showGoToPage = true },
+            onOpenElsewhere = openInAnotherApp,
             onDismiss = { showOptions = false },
         )
     }
@@ -138,6 +144,13 @@ private fun DocumentViewerContent(
                         icon = painterResource(R.drawable.ic_list),
                         contentDescription = stringResource(R.string.viewer_pdf_contents),
                         onClick = { showContents = true }
+                    )
+                }
+                if (viewer.format != ViewerFormat.Pdf) {
+                    PvotTopBarAction(
+                        icon = painterResource(R.drawable.ic_external_link),
+                        contentDescription = stringResource(R.string.viewer_open_elsewhere),
+                        onClick = openInAnotherApp
                     )
                 }
                 if (pdfToolsShown) {

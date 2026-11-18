@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.prauga.documents.common.ViewerFormat
 import org.prauga.documents.common.WhileScreenSubscribed
+import org.prauga.documents.library.data.DocumentsRepository
 import org.prauga.documents.settings.data.SettingsRepository
 import org.prauga.documents.viewer.data.DocumentLoader
 import org.prauga.documents.viewer.data.ReadingPosition
@@ -34,6 +35,7 @@ class DocumentViewerViewModel @Inject constructor(
     private val documentLoader: DocumentLoader,
     private val readingPositionRepository: ReadingPositionRepository,
     private val settingsRepository: SettingsRepository,
+    private val documentsRepository: DocumentsRepository,
 ) : ViewModel() {
 
     private val uri = requireNotNull(savedStateHandle.get<String>(DocumentViewerActivity.ExtraUri)) {
@@ -48,17 +50,20 @@ class DocumentViewerViewModel @Inject constructor(
 
     private val content = MutableStateFlow<ViewerContentState>(ViewerContentState.Loading)
     private val reading = MutableStateFlow<Reading?>(null)
+    private val mimeType = MutableStateFlow<String?>(null)
     private var password: String? = null
     private var passwordAttempts = 0
     private var loading: Job? = null
     private var opened: Closeable? = null
 
     val state: StateFlow<UiState<DocumentViewerUiState>> =
-        combine(content, reading, settingsRepository.settings) { content, reading, settings ->
-            if (reading == null || settings == null) return@combine UiState.Loading
+        combine(content, reading, settingsRepository.settings, mimeType) { content, reading, settings, mimeType ->
+            if (reading == null || settings == null || mimeType == null) return@combine UiState.Loading
             UiState.Success(
                 DocumentViewerUiState(
+                    uri = uri,
                     name = name,
+                    mimeType = mimeType,
                     format = format,
                     content = content,
                     darkPdfPages = settings.darkPdfPages,
@@ -68,6 +73,7 @@ class DocumentViewerViewModel @Inject constructor(
         }.stateIn(viewModelScope, WhileScreenSubscribed, UiState.Loading)
 
     init {
+        viewModelScope.launch { mimeType.value = documentsRepository.mimeType(uri) }
         viewModelScope.launch {
             val key = readingPositionRepository.key(uri, name)
             reading.value = Reading(key, readingPositionRepository.position(key))
