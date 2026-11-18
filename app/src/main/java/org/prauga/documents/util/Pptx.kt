@@ -330,7 +330,7 @@ private class SlideBuilder(private val reader: PptxReader, private val slide: Pa
         val fill = when {
             ownFill === NoFill -> null
             ownFill != null -> ownFill
-            ph != null -> (fill(ph.onLayout?.child("p:spPr"), layout!!) ?: fill(ph.onMaster?.child("p:spPr"), master!!))?.takeIf { it !== NoFill }
+            ph != null -> (layout?.let { fill(ph.onLayout?.child("p:spPr"), it) } ?: master?.let { fill(ph.onMaster?.child("p:spPr"), it) })?.takeIf { it !== NoFill }
             else -> style?.child("a:fillRef")?.takeIf { (it.attr("idx")?.toIntOrNull() ?: 0) > 0 }?.let { ref -> color(ref)?.let { SlideFill.Solid(it) } }
         }
         val line = line(spPr?.child("a:ln"), style)
