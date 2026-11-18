@@ -13,11 +13,11 @@ import androidx.core.content.edit
 import com.prauga.pvot.designsystem.effects.PvotGlassDefaults
 import org.json.JSONArray
 import org.json.JSONObject
-import org.prauga.documents.models.DocumentEntry
-import org.prauga.documents.models.TrashedDocument
-import org.prauga.documents.util.isOwnFile
-import java.io.File
+import org.prauga.documents.common.isOwnFile
+import org.prauga.documents.library.data.DocumentEntry
+import org.prauga.documents.library.data.TrashedDocument
 import timber.log.Timber
+import java.io.File
 
 /** The app's settings, kept in SharedPreferences and observable from Compose. */
 class AppPreferences(context: Context) {
@@ -83,7 +83,7 @@ class AppPreferences(context: Context) {
         folderUris = updated
     }
 
-    /** Whether the user has been through [org.prauga.documents.ui.screens.OnboardingScreen]. */
+    /** Whether the user has been through [org.prauga.documents.onboarding.OnboardingScreen]. */
     var onboardingComplete by mutableStateOf(prefs.getBoolean(KEY_ONBOARDING_COMPLETE, false))
         private set
 
@@ -95,7 +95,7 @@ class AppPreferences(context: Context) {
     /**
      * Whether a document opened from another app is copied into Documents' own storage: null
      * until the user has been asked once, through the prompt in
-     * [org.prauga.documents.ui.screens.IncomingDocumentHandler]. Changeable afterward from
+     * [org.prauga.documents.incoming.IncomingDocumentHandler]. Changeable afterward from
      * Settings.
      */
     var autosaveOpenedDocuments by mutableStateOf(
@@ -132,7 +132,7 @@ class AppPreferences(context: Context) {
     /**
      * Adds [entry], replacing any existing entry for the same document. Re-opening an unsaved
      * document resolves to the same content URI, and re-opening an autosaved one reuses the same
-     * copy (see [org.prauga.documents.data.DocumentsRepository.copyToAppStorage]), so a URI match
+     * copy (see [org.prauga.documents.library.data.DocumentsRepository.copyToAppStorage]), so a URI match
      * covers both. A name-and-size match also counts, for the same document reached through a
      * different content URI or across an autosave setting change — but not between two of
      * Documents' own copies: those only differ when their content does, so both stay listed.
@@ -153,7 +153,7 @@ class AppPreferences(context: Context) {
 
     /**
      * Documents moved to Recently deleted, most recent first — see
-     * [org.prauga.documents.data.DocumentsRepository.moveToTrash].
+     * [org.prauga.documents.library.data.DocumentsRepository.moveToTrash].
      */
     var trashedDocuments by mutableStateOf(decodeTrashedDocuments(prefs.getString(KEY_TRASH, null)))
         private set

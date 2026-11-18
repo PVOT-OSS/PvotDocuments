@@ -5,10 +5,10 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.net.toUri
-import dagger.hilt.android.AndroidEntryPoint
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
-import org.prauga.documents.util.ViewerFormat
+import dagger.hilt.android.AndroidEntryPoint
+import org.prauga.documents.common.ViewerFormat
 
 /**
  * Hosts one document's viewer, full screen. [start] is the only way in: it carries the URI, name

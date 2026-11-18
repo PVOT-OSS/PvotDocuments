@@ -7,14 +7,14 @@ import android.os.Bundle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import dagger.hilt.android.AndroidEntryPoint
 import com.prauga.pvot.designsystem.effects.ProvidePvotGlassIntensity
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
-import org.prauga.documents.extensions.parcelableExtraCompat
-import org.prauga.documents.ui.AppShell
-import org.prauga.documents.ui.screens.IncomingDocumentHandler
-import org.prauga.documents.ui.screens.OnboardingScreen
+import dagger.hilt.android.AndroidEntryPoint
+import org.prauga.documents.common.parcelableExtraCompat
+import org.prauga.documents.home.AppShell
+import org.prauga.documents.incoming.IncomingDocumentHandler
+import org.prauga.documents.onboarding.OnboardingScreen
 
 @AndroidEntryPoint
 class MainActivity : PvotBaseActivity() {
