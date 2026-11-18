@@ -9,6 +9,7 @@ import org.prauga.documents.library.data.ManagedDocument
 import org.prauga.documents.library.data.TrashedDocument
 
 sealed interface ManageEvent {
+    data object Refresh : ManageEvent
     data class AddFolder(val treeUri: Uri) : ManageEvent
     data class RemoveFolder(val treeUri: Uri) : ManageEvent
     data class Open(val document: ManagedDocument) : ManageEvent

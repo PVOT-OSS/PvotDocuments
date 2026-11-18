@@ -81,6 +81,7 @@ class ManageViewModel @Inject constructor(
 
     fun onEvent(event: ManageEvent) {
         when (event) {
+            ManageEvent.Refresh -> refreshes.update { it + 1 }
             is ManageEvent.AddFolder -> libraryRepository.addFolder(event.treeUri)
             is ManageEvent.RemoveFolder -> libraryRepository.removeFolder(event.treeUri)
             is ManageEvent.Open -> open(event.document)

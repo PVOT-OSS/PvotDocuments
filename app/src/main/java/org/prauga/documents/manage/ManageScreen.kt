@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.PvotEmptyContent
 import com.prauga.pvot.coreui.UiState
@@ -76,6 +77,11 @@ fun ManageScreen(
     viewModel: ManageViewModel = hiltViewModel(),
 ) {
     DocumentEffects(viewModel.effects, onMessage)
+    // Folders can change outside the app; re-list them each time the screen comes into view.
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onEvent(ManageEvent.Refresh)
+        onPauseOrDispose {}
+    }
     val uiState by viewModel.state.collectAsStateWithLifecycle()
     val manage = (uiState as? UiState.Success)?.data ?: return
     ManageContent(manage, viewModel::onEvent, onMessage, state, topPadding, modifier)
