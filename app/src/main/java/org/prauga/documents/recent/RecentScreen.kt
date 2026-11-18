@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-FileCopyrightText: 2026 Saalim Quadri <danascape@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.recent
 
 import androidx.compose.foundation.layout.Arrangement

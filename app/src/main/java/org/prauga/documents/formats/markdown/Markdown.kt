@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.formats.markdown
 
 private val HeadingRegex = Regex("^(#{1,6})\\s+(.*)$")

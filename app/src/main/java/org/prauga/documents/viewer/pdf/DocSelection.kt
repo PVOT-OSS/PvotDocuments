@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.viewer.pdf
 
 /** A selection that can run across pages. [anchor] is where it started and [focus] where it was

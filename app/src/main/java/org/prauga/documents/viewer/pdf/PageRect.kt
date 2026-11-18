@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.viewer.pdf
 
 /** A page box in page-relative fractions: 0..1 across the page's displayed width and height, top

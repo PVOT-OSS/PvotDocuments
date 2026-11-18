@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.viewer.pdf
 
 /** A character in the document: [char] is a Pdfium character index on page [page]. */

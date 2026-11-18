@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Saalim Quadri <danascape@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.formats.sheet
 
 import org.junit.Assert.assertEquals

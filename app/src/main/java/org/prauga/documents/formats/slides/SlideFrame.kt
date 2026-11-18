@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.formats.slides
 
 /** A rectangle on a slide, in points from its top-left corner, with a clockwise rotation in

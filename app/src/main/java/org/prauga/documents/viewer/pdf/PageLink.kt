@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.viewer.pdf
 
 /** A link on a page: tapping any of [rects] goes to [destPage] in this document, or opens [uri].

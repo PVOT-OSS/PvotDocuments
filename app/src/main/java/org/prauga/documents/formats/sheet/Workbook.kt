@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.formats.sheet
 
 /** A whole spreadsheet. [truncated] when it was too large to read in full, in which case only its

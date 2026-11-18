@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Debayan G <debz.exe@gmail.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 package org.prauga.documents.formats.sheet
 
 /** Past this many cells a workbook stops loading: each cell is an object in memory, and a phone has
