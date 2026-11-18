@@ -4,8 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
 
-/** The whole document's zoom and pan — pinch scales the entire scrolling document in place, as a
- * PDF reader does, rather than one page inside its own frame. Offsets are in screen pixels. */
+/** Zoom and pan of the whole scrolling document, not of one page in its frame. Offsets are in
+ * screen pixels. */
 internal class PdfZoomState {
     var scale by mutableFloatStateOf(1f)
     var offsetX by mutableFloatStateOf(0f)

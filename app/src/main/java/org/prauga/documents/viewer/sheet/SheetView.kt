@@ -75,7 +75,6 @@ import org.prauga.documents.formats.sheet.columnName
 import org.prauga.documents.viewer.DocumentColors
 import kotlin.math.max
 
-/** A grid of plain rows (CSV), shown the same way as a one-sheet workbook. */
 @Composable
 fun CsvSheetView(rows: List<List<String>>, topPadding: Dp, modifier: Modifier = Modifier) {
     val workbook = remember(rows) { csvWorkbook(rows) }
@@ -110,8 +109,6 @@ private fun csvWorkbook(rows: List<List<String>>): Workbook {
 /** CSV has no widths of its own; a little wider than Excel's default suits typical text columns. */
 private const val CsvColumnWidthChars = 14f
 
-/** An Excel or OpenDocument spreadsheet: its sheets as tabs, each a grid that scrolls both ways
- * with the column letters and row numbers kept in view, and pinch to zoom. */
 @Composable
 fun SpreadsheetView(workbook: Workbook, topPadding: Dp, modifier: Modifier = Modifier) {
     var selected by remember(workbook) { mutableIntStateOf(0) }
@@ -249,7 +246,6 @@ private fun SheetGrid(sheet: Sheet, styles: List<CellStyle>, modifier: Modifier)
                 }
             }
         }
-        // Column letters, fixed at the top.
         Canvas(Modifier.fillMaxWidth().height(with(density) { headerPx.toDp() })) {
             drawColumnHeader(sheet, edges, scrollX, rowHeaderPx, zoom, measurer, look)
         }
@@ -261,7 +257,6 @@ private const val PtToDp = 4f / 3f
 
 private const val TextCacheSize = 512
 
-/** Empty columns shown past the last one in use. */
 private const val TrailingColumns = 3
 
 private class SheetLook(
@@ -276,7 +271,6 @@ private class SheetLook(
     val cellPadding: Dp,
 )
 
-/** Merged ranges by the row they start on, and a lookup for the cells they cover. */
 private class MergeIndex(merges: List<CellRange>) {
     private val byStartRow: Map<Int, List<CellRange>> = merges.groupBy { it.firstRow }
 
@@ -355,7 +349,6 @@ private fun DrawScope.drawSheetRow(
     val pad = look.cellPadding.toPx() * zoom
     clipRect(left = rowHeaderPx) {
         val firstVisible = firstColumnAt(edges, scrollX)
-        // Grid lines for the visible columns.
         var c = firstVisible
         while (c < edges.size - 1) {
             val right = rowHeaderPx + edges[c + 1] - scrollX
@@ -414,7 +407,6 @@ private fun DrawScope.drawSheetRow(
             i++
         }
     }
-    // Row number, fixed at the start.
     drawRect(look.headerBackground, size = Size(rowHeaderPx, size.height))
     drawCellText(
         measurer,
@@ -426,9 +418,7 @@ private fun DrawScope.drawSheetRow(
     drawLine(look.grid, Offset(0f, size.height), Offset(rowHeaderPx, size.height))
 }
 
-/** The cell's own text color when it reads against what's behind it; otherwise the theme's text
- * color, or black or white against a fill. A sheet made on white paper often spells out black
- * text, which would vanish on a dark theme. */
+/** A sheet made on white paper often spells out black text, which would vanish on a dark theme. */
 private fun readableTextColor(style: CellStyle, look: SheetLook): Color {
     val background = style.fill?.let { Color(it) } ?: look.background
     val own = style.textColor?.let { Color(it) }
@@ -465,8 +455,6 @@ private fun DrawScope.drawCellText(
         maxLines = if (wrap) Int.MAX_VALUE else 1,
         constraints = Constraints(minWidth = width.toInt(), maxWidth = width.toInt()),
     )
-    // Single lines sit centered in the row, as a spreadsheet draws them; wrapped text starts at
-    // the top.
     val y = if (wrap) top else top + (height - layout.size.height) / 2f
     drawText(layout, topLeft = Offset(left, y))
 }

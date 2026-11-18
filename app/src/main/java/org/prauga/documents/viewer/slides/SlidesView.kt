@@ -101,12 +101,7 @@ import kotlin.math.roundToInt
 /** Opens a link from a slide, after asking. */
 private val LocalSlideLink = compositionLocalOf<(String) -> Unit> { {} }
 
-/**
- * A PowerPoint (`.pptx`) or OpenDocument (`.odp`) presentation, slide after slide, each drawn as
- * laid out: backgrounds, shapes, pictures, tables and text where the deck puts them, scaled to the
- * screen's width. Slides are drawn as authored, like PDF pages, rather than recolored for the
- * theme. Pinch to zoom; the page indicator and go-to-page work as in the PDF viewer.
- */
+/** Slides are drawn as authored, like PDF pages, rather than recolored for the theme. */
 @Composable
 fun SlidesView(
     presentation: Presentation,
@@ -120,7 +115,6 @@ fun SlidesView(
     var pendingLink by remember(presentation) { mutableStateOf<String?>(null) }
     pendingLink?.let { OpenLinkDialog(it, onDismiss = { pendingLink = null }) }
 
-    // The page indicator and go-to-page, as for PDFs.
     DisposableEffect(navigation, presentation) {
         navigation.pageCount = presentation.slides.size
         navigation.currentPage = 0
@@ -411,9 +405,6 @@ private fun TableView(table: SlideShape.Table, scale: Float) {
     }
 }
 
-/** Table lines, drawn as on a slide's paper rather than in the app's theme. */
-
-/** A picture filling its box (a picture background or picture fill). */
 @Composable
 private fun PictureFill(presentation: Presentation, path: String, modifier: Modifier, widthPx: Int) {
     val bitmap by produceState<ImageBitmap?>(null, path, widthPx) {

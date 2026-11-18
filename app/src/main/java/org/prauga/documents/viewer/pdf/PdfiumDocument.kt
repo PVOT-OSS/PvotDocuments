@@ -63,7 +63,6 @@ internal class PdfiumDocument private constructor(
     fun cachedPage(index: Int, widthPx: Int): Bitmap? =
         pageBitmaps.get(index)?.takeIf { it.width == widthPx }
 
-    /** The whole page at [widthPx] by [heightPx], form fields and annotations included. */
     suspend fun renderPage(index: Int, widthPx: Int, heightPx: Int): Bitmap = withContext(pdfium) {
         cachedPage(index, widthPx)?.let { return@withContext it }
         val bitmap = createBitmap(widthPx, heightPx)
@@ -72,7 +71,6 @@ internal class PdfiumDocument private constructor(
         bitmap
     }
 
-    /** A small render of the whole page, [widthPx] wide, for the page overview. */
     suspend fun renderThumbnail(index: Int, widthPx: Int): Bitmap = withContext(pdfium) {
         thumbnails.get(index)?.takeIf { it.width == widthPx }?.let { return@withContext it }
         val heightPx = (widthPx / pageAspects[index]).roundToInt().coerceAtLeast(1)
@@ -117,7 +115,6 @@ internal class PdfiumDocument private constructor(
         text
     }
 
-    /** The page's link annotations, in [PageRect] fractions like everything else on the page. */
     suspend fun pageLinks(index: Int): List<PageLink> = withContext(pdfium) {
         pageLinkCache.get(index)?.let { return@withContext it }
         val page = page(index)
@@ -147,8 +144,6 @@ internal class PdfiumDocument private constructor(
         links
     }
 
-    /** The document's outline, flattened depth-first; empty when it has none. Entries pointing
-     * outside the document are dropped. */
     suspend fun outline(): List<OutlineEntry> = withContext(pdfium) {
         buildList {
             fun walk(bookmarks: List<Bookmark>, depth: Int) {
@@ -187,10 +182,9 @@ internal class PdfiumDocument private constructor(
         }
     }
 
-    /** Drops every cache — page renders, thumbnails, and the open Pdfium pages along with the
-     * images Pdfium decoded for them — when the system asks the app to give memory back. A
-     * scanned document holds several large decoded images per open page. Runs after any queued
-     * render, so nothing in use is closed underneath it; pages simply re-render on demand. */
+    /** Drops every cache, open Pdfium pages included: a scanned document holds several large
+     * decoded images per open page. Runs after any queued render, so nothing in use is closed
+     * underneath it. */
     fun trimMemory() {
         scope.launch {
             pageBitmaps.evictAll()

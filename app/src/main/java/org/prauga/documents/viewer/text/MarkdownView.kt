@@ -37,9 +37,7 @@ import org.prauga.documents.R
 import org.prauga.documents.formats.markdown.MarkdownBlock
 import org.prauga.documents.formats.markdown.parseMarkdown
 
-/** [text] parsed and shown as rendered Markdown: headings, paragraphs, lists, code fences,
- * blockquotes and rules, with bold/italic/code/link styling inside each line. One block per list
- * row, so a long document scrolls lazily rather than laying out as a single giant [Text]. */
+/** One block per list row, so a long document scrolls lazily rather than laying out as one [Text]. */
 @Composable
 fun MarkdownView(text: String, topPadding: Dp, modifier: Modifier = Modifier) {
     val blocks = remember(text) { parseMarkdown(text) }
@@ -136,9 +134,7 @@ private val InlineRegex = Regex(
     "\\*\\*(.+?)\\*\\*|__(.+?)__|`(.+?)`|\\[(.+?)]\\((.+?)\\)|\\*(.+?)\\*|_(.+?)_"
 )
 
-/** [line]'s inline markers (`**bold**`, `_italic_`, `` `code` ``, `[text](url)`) turned into spans
- * on an [AnnotatedString] — the same line text the block parser kept untouched, styled now that a
- * composable (and its theme colors) is available. */
+/** The block parser leaves inline markers in the line; they're styled here, where theme colors are known. */
 private fun inlineMarkdown(line: String, linkColor: Color, codeFontSize: TextUnit): AnnotatedString = buildAnnotatedString {
     var last = 0
     for (match in InlineRegex.findAll(line)) {

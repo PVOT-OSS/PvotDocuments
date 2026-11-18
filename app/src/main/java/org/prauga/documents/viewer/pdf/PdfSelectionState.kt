@@ -6,13 +6,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/**
- * The text selection's actions, shared between [PdfView], which owns the selection, and the
- * viewer's bottom bar ([PdfSelectionBar]), which offers them while something is selected.
- */
+/** Shared between [PdfView], which owns the selection, and [PdfSelectionBar], which offers its
+ * actions while something is selected. */
 @Stable
 class PdfSelectionState {
-    /** Whether any text is selected. */
     var active by mutableStateOf(false)
         internal set
 

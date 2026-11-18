@@ -108,9 +108,8 @@ import org.prauga.documents.viewer.data.ReadingPosition
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/** A PDF's pages, rendered in-process by Pdfium. Pages render lazily at list width as they
- * scroll into view; when zoomed in, the visible part of each on-screen page is re-rendered at the
- * zoomed resolution once the gesture settles, so text stays sharp. */
+/** Pages render lazily at list width as they scroll into view; when zoomed in, the visible part
+ * of each on-screen page is re-rendered at the zoomed resolution once the gesture settles. */
 @Composable
 internal fun PdfView(
     document: PdfiumDocument,
@@ -403,7 +402,6 @@ private fun PdfContent(
     val listCoordinates = remember { CoordinatesHolder() }
     var zoomJob by remember { mutableStateOf<Job?>(null) }
 
-    /** Double tap: zoom in around the tapped point, or back out to the whole page if zoomed. */
     fun toggleZoomAt(windowPosition: Offset) {
         val coords = listCoordinates.value?.takeIf { it.isAttached } ?: return
         val point = coords.windowToLocal(windowPosition)
@@ -477,11 +475,10 @@ private fun PdfContent(
 
     val truncatedMessage = pluralStringResource(R.plurals.viewer_pdf_selection_truncated, SelectionTextLimit, SelectionTextLimit)
 
-    /** The selected text, read page by page (Pdfium text for pages not on screen is loaded as
-     * needed), with a line break between pages, and whether it was cut short. It stops at
+    /** The selected text, a line break between pages, and whether it was cut short. It stops at
      * [SelectionTextLimit] characters: the clipboard and the share sheet both go through a
-     * size-limited binder transaction (10 MB of text from a 2,000-page Select all crashed the app),
-     * and stopping early also saves reading every page of a long document. */
+     * size-limited binder transaction, and stopping early saves reading every page of a long
+     * document. */
     suspend fun selectedText(sel: DocSelection): Pair<String, Boolean> {
         val text = StringBuilder()
         var truncated = false
@@ -568,8 +565,8 @@ private fun PdfContent(
                 // page at 4x would only pan a quarter as far as the finger moved.
                 .pinchZoom(zoom, listState, scope)
                 // Block form, so zoom state is read in the draw phase: the parameter overload
-                // reads it during composition and recomposed the whole list on every frame of
-                // a pinch or pan.
+                // reads it during composition and would recompose the whole list on every frame
+                // of a pinch or pan.
                 .graphicsLayer {
                     scaleX = zoom.scale
                     scaleY = zoom.scale
@@ -691,7 +688,6 @@ internal val DarkPageFilter = ColorFilter.colorMatrix(
     )
 )
 
-/** The colour of a page before (or under) its render: paper white, or black with dark pages. */
 @Composable
 internal fun pagePaper(dark: Boolean): Color = if (dark) DocumentColors.darkPaper else DocumentColors.paper
 
@@ -1049,8 +1045,8 @@ private fun PageText.charNearest(position: Offset, size: IntSize, skipWhitespace
     return best
 }
 
-/** The word around character [index] — the run of letters and digits it belongs to — so a long
- * press selects a whole word, as in other readers. Punctuation on its own is selected alone. */
+/** The run of letters and digits around character [index]; punctuation on its own is selected
+ * alone. */
 private fun PageText.wordAround(index: Int): IntRange {
     fun isWordChar(i: Int) = text.getOrNull(i)?.isLetterOrDigit() == true
     if (!isWordChar(index)) return index..index

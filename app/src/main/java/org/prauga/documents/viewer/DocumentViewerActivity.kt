@@ -8,11 +8,7 @@ import com.prauga.pvot.designsystem.theme.PvotAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import org.prauga.documents.common.ViewerTarget
 
-/**
- * Hosts one document's viewer, full screen. [start] is the only way in: it carries the URI, name
- * and format the caller already resolved — this activity renders, it doesn't decide what it's
- * able to open.
- */
+/** Launched only through [start], with a URI, name and format the caller has already resolved. */
 @AndroidEntryPoint
 class DocumentViewerActivity : PvotBaseActivity() {
 

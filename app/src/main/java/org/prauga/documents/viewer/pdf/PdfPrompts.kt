@@ -41,8 +41,8 @@ import com.prauga.pvot.designsystem.components.textfield.PvotTextField
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/** Shown in place of an encrypted PDF until its password is entered. [wrongPassword] when the last
- * one tried, [attempt], didn't open it. The password isn't stored anywhere; it lives as long as the viewer. */
+/** [wrongPassword] when the last one tried, [attempt], didn't open it. The password isn't stored
+ * anywhere; it lives as long as the viewer. */
 @Composable
 internal fun PdfPasswordPrompt(
     wrongPassword: Boolean,

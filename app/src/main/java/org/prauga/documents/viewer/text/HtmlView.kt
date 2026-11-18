@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.core.text.HtmlCompat
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 
-/** [html] through the platform's own HTML parser, shown as scrollable, selectable styled text. */
 @Composable
 fun HtmlView(html: String, topPadding: Dp, modifier: Modifier = Modifier) {
     val linkColor = MaterialTheme.colorScheme.primary
@@ -45,10 +44,8 @@ fun HtmlView(html: String, topPadding: Dp, modifier: Modifier = Modifier) {
     }
 }
 
-/** [html] parsed by [HtmlCompat], its character-level spans (bold, italic, underline,
- * strikethrough, color, links) carried over into an [AnnotatedString]. Layout spans such as
- * bullets, quotes or images aren't carried over — there's no Compose equivalent to drop them
- * into, so those render as plain paragraph breaks instead. */
+/** Only character-level spans are carried over; layout spans such as bullets, quotes or images have
+ * no [AnnotatedString] equivalent, so those render as plain paragraph breaks. */
 private fun htmlToAnnotatedString(html: String, linkColor: Color): AnnotatedString {
     val spanned = HtmlCompat.fromHtml(html, HtmlCompat.FROM_HTML_MODE_COMPACT)
     return buildAnnotatedString {

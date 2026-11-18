@@ -21,9 +21,7 @@ import com.prauga.pvot.designsystem.effects.PvotGlassMaterial
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/** What to do with the selected text, in a glass capsule over the bottom of the document: copy,
- * share, search the document for it, or widen the selection to the whole document. Thick glass,
- * like the search bar, because it sits over white pages. */
+/** Thick glass, like the search bar, because it sits over white pages. */
 @Composable
 fun PdfSelectionBar(state: PdfSelectionState, modifier: Modifier = Modifier) {
     Row(

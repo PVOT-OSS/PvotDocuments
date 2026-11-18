@@ -93,9 +93,7 @@ private val LocalOpenLink = compositionLocalOf<(String) -> Unit> { {} }
 
 private const val DefaultBodyPt = 11f
 
-/** A Word (`.docx`) or OpenDocument (`.odt`) document as flowing, selectable text: headings,
- * lists, tables and pictures in reading order, styled as the document styles them, reflowed to
- * the phone's width rather than laid out as pages. */
+/** Reflowed to the screen's width rather than laid out as pages. */
 @Composable
 fun RichDocumentView(document: RichDocument, topPadding: Dp, modifier: Modifier = Modifier) {
     val bodyPt = remember(document) { bodySizePt(document.blocks, document.defaultSizePt) }
@@ -265,9 +263,7 @@ private const val MinScale = 0.6f
 private const val MaxScale = 3f
 private val SmallPositionSize = 0.75.em
 
-/** The document's own text color when it reads against what's behind it; otherwise the theme's
- * text color, or black or white over a highlight. Documents written on white paper often spell
- * out black text, which would vanish on a dark theme. */
+/** Documents written on white paper often spell out black text, which would vanish on a dark theme. */
 private fun readableColor(own: Color?, behind: Color, default: Color, ink: Color, paper: Color): Color {
     if (own != null && contrast(own, behind) >= MinContrast) return own
     if (behind == Color.Unspecified || contrast(default, behind) >= MinContrast) return default

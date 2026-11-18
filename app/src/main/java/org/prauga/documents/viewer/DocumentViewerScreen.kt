@@ -65,8 +65,6 @@ import org.prauga.documents.viewer.slides.SlidesView
 import org.prauga.documents.viewer.text.HtmlView
 import org.prauga.documents.viewer.text.MarkdownView
 
-/** The document [DocumentViewerViewModel] reads, in the viewer for its format, under a top bar
- * titled with its name. PDFs add search, contents, go-to-page and view options. */
 @Composable
 fun DocumentViewerScreen(
     onBack: () -> Unit,

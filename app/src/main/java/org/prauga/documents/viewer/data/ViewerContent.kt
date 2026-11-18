@@ -5,7 +5,6 @@ import org.prauga.documents.formats.sheet.Workbook
 import org.prauga.documents.formats.slides.Presentation
 import org.prauga.documents.viewer.pdf.PdfiumDocument
 
-/** A document read and ready to show, in the form its viewer draws. */
 sealed interface ViewerContent {
     data class Text(val text: String, val monospace: Boolean) : ViewerContent
     data class Csv(val rows: List<List<String>>) : ViewerContent

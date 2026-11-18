@@ -5,8 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import org.prauga.documents.R
 
-/** What a document is drawn with where it gives no color of its own: the paper, ink and table
- * lines of a printed page, the same in light and dark theme. */
+/** Colors for documents that set none of their own; the same in light and dark theme, like paper. */
 internal object DocumentColors {
     val paper: Color
         @Composable get() = colorResource(R.color.document_paper)

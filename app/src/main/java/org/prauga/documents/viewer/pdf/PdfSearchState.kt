@@ -6,11 +6,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/**
- * Find-in-document, shared between the viewer's bars and [PdfView]: the top bar opens it, the
- * bottom bar ([PdfSearchBar]) edits the query and steps through matches, and [PdfView] runs the
- * search and scrolls to each match.
- */
+/** Shared between the viewer's bars, which open search and edit the query, and [PdfView], which
+ * runs the search and scrolls to each match. */
 @Stable
 class PdfSearchState {
     /** Whether a document is loaded that can be searched; set by [PdfView]. */

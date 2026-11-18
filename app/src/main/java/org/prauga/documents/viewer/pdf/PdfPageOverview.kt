@@ -52,8 +52,6 @@ import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/** Every page as a thumbnail, in a grid over the document; the page being read is outlined and
- * scrolled into view. Tapping a page goes there and closes the overview, as does back. */
 @Composable
 internal fun PdfPageOverview(
     document: PdfiumDocument,

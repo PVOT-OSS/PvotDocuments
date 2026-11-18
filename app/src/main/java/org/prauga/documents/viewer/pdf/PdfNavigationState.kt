@@ -6,11 +6,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-/**
- * Where the reader is in a PDF and how to move around it, shared between the viewer's bars and
- * [PdfView]: [PdfView] reports the page count, the page on screen and the outline, and provides
- * [goToPage]; the bars show the page indicator, the go-to-page dialog and the contents sheet.
- */
+/** Shared between the viewer's bars and [PdfView], which reports the page count, the page on
+ * screen and the outline, and provides [goToPage]. */
 @Stable
 class PdfNavigationState {
     var pageCount by mutableIntStateOf(0)
@@ -28,7 +25,6 @@ class PdfNavigationState {
     var indicatorVisible by mutableStateOf(false)
         internal set
 
-    /** Whether the page overview (every page as a thumbnail) is showing over the document. */
     var overviewOpen by mutableStateOf(false)
 
     internal var goTo: (pageIndex: Int) -> Unit = {}

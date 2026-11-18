@@ -41,8 +41,7 @@ import com.prauga.pvot.designsystem.effects.PvotGlassMaterial
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/** "3 / 12" in a small glass capsule over the bottom of the document; tapping it asks for a page
- * to go to. Thick glass for the same reason as [PdfSearchBar]: it sits over white pages. */
+/** Thick glass for the same reason as [PdfSearchBar]: it sits over white pages. */
 @Composable
 fun PdfPageIndicator(state: PdfNavigationState, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val page = state.currentPage + 1
@@ -73,7 +72,6 @@ fun PdfPageIndicator(state: PdfNavigationState, onClick: () -> Unit, modifier: M
     }
 }
 
-/** Asks for a page number, 1 to [PdfNavigationState.pageCount], and goes there. */
 @Composable
 fun GoToPageDialog(state: PdfNavigationState, onDismiss: () -> Unit) {
     var text by remember { mutableStateOf("") }
@@ -115,8 +113,6 @@ fun GoToPageDialog(state: PdfNavigationState, onDismiss: () -> Unit) {
 
 private const val MaxPageDigits = 6
 
-/** The document's outline as a sheet, nested entries indented under their parent; tapping one goes
- * to its page. */
 @Composable
 fun PdfContentsSheet(state: PdfNavigationState, onDismiss: () -> Unit) {
     PvotBottomSheet(
@@ -141,8 +137,6 @@ fun PdfContentsSheet(state: PdfNavigationState, onDismiss: () -> Unit) {
 /** Deeper levels stop indenting, so a deeply nested outline doesn't squeeze titles to nothing. */
 private const val MaxIndentLevels = 3
 
-/** The viewer's less frequent options, behind the top bar's "more": the page overview, go to
- * page, and dark pages, which is remembered for every PDF. */
 @Composable
 fun PdfViewOptionsSheet(
     darkPages: Boolean,

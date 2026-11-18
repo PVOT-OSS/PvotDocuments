@@ -41,16 +41,11 @@ import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-/**
- * The search bar, floating over the bottom of the document as glass and riding above the
- * keyboard: a capsule with the query, the match count and previous/next, and a round close button
- * beside it, the same height. Goes in the scaffold's bottom bar so it refracts the page behind it.
- */
+/** Goes in the scaffold's bottom bar so the glass refracts the page behind it. */
 @Composable
 fun PdfSearchBar(state: PdfSearchState, modifier: Modifier = Modifier) {
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    // Opening search goes straight to typing.
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     BackHandler(onBack = state::close)
 
