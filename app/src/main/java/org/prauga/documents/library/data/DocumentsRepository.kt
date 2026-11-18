@@ -280,7 +280,12 @@ class DocumentsRepository @Inject constructor(
         )
     }
 
-    private fun safeFileName(displayName: String) = displayName.ifBlank { "document" }
+    // The name comes from another app's provider; it must not be able to step out of the copy's
+    // own folder into the rest of the app's storage.
+    private fun safeFileName(displayName: String): String {
+        val name = displayName.substringAfterLast('/').substringAfterLast('\\')
+        return if (name.isBlank() || name == "." || name == "..") "document" else name
+    }
 
     /** Also deletes the now-empty subfolder. */
     private fun deleteOwnCopy(uri: Uri) {
