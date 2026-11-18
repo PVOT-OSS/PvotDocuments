@@ -133,15 +133,16 @@ fun RichDocumentView(uri: Uri, topPadding: Dp, modifier: Modifier = Modifier) {
  * [RichDocument] deletes when closed. The format is recognized from the zip's contents. */
 private fun readRichDocument(context: Context, uri: Uri): RichDocument {
     val temp = File.createTempFile("document", ".zip", context.cacheDir)
+    var parsed: RichDocument? = null
     try {
         context.contentResolver.openInputStream(uri)?.use { input ->
             temp.outputStream().use { input.copyTo(it) }
         } ?: error("Could not open $uri for reading")
         val isWord = ZipFile(temp).use { it.getEntry("word/document.xml") != null }
-        return if (isWord) parseDocx(temp) else parseOdt(temp)
-    } catch (e: Throwable) {
-        temp.delete()
-        throw e
+        parsed = if (isWord) parseDocx(temp) else parseOdt(temp)
+        return parsed
+    } finally {
+        if (parsed == null) temp.delete()
     }
 }
 

@@ -151,15 +151,16 @@ fun SlidesView(uri: Uri, topPadding: Dp, navigation: PdfNavigationState, modifie
  * recognized from the zip's contents. */
 private fun readPresentation(context: Context, uri: Uri): Presentation {
     val temp = File.createTempFile("slides", ".zip", context.cacheDir)
+    var parsed: Presentation? = null
     try {
         context.contentResolver.openInputStream(uri)?.use { input ->
             temp.outputStream().use { input.copyTo(it) }
         } ?: error("Could not open $uri for reading")
         val isPptx = ZipFile(temp).use { it.getEntry("ppt/presentation.xml") != null }
-        return if (isPptx) parsePptx(temp) else parseOdp(temp)
-    } catch (e: Throwable) {
-        temp.delete()
-        throw e
+        parsed = if (isPptx) parsePptx(temp) else parseOdp(temp)
+        return parsed
+    } finally {
+        if (parsed == null) temp.delete()
     }
 }
 
