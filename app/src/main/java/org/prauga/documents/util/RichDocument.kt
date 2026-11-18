@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import java.io.Closeable
 import java.io.File
 import java.util.zip.ZipFile
+import timber.log.Timber
 
 /** How a run of text looks. Colors are the document's own (ARGB), null where it leaves them to
  * the default. [sizePt] is the font size in points, null for the document's default. */
@@ -100,7 +101,7 @@ class RichDocument(
     }.getOrNull()
 
     override fun close() {
-        runCatching { zip.close() }
+        runCatching { zip.close() }.onFailure { Timber.w("Could not close a document package: %s", it.javaClass.name) }
         packageFile.delete()
     }
 }

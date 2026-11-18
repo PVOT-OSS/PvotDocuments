@@ -6,6 +6,7 @@ import androidx.core.content.FileProvider
 import org.prauga.documents.BuildConfig
 import org.prauga.documents.models.DocumentEntry
 import java.io.File
+import timber.log.Timber
 
 /**
  * [document]'s URI, safe to hand to another component (an intent, a viewer). A document from an
@@ -22,7 +23,7 @@ fun readableUri(context: Context, document: DocumentEntry): Uri? {
     if (!isOwnFile(context, file)) return null
     return runCatching {
         FileProvider.getUriForFile(context, "${BuildConfig.APPLICATION_ID}.fileprovider", file)
-    }.getOrNull()
+    }.onFailure { Timber.w("Could not share an own copy: %s", it.javaClass.name) }.getOrNull()
 }
 
 /** Whether [file] is inside the app's own `filesDir`, where its copies of documents live. */

@@ -11,6 +11,7 @@ import org.prauga.documents.models.FolderEntry
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
+import timber.log.Timber
 
 /**
  * Reads folders and documents through the Storage Access Framework. Every call is a live query
@@ -59,7 +60,7 @@ class DocumentsRepository(private val context: Context) {
      * since expired, for example.
      */
     suspend fun documentInfo(uri: Uri): DocumentEntry? = withContext(Dispatchers.IO) {
-        val doc = runCatching { DocumentFile.fromSingleUri(context, uri) }.getOrNull()
+        val doc = runCatching { DocumentFile.fromSingleUri(context, uri) }.onFailure { Timber.w("Could not resolve a document: %s", it.javaClass.name) }.getOrNull()
             ?: return@withContext null
         if (!doc.exists()) return@withContext null
         DocumentEntry(
@@ -74,6 +75,7 @@ class DocumentsRepository(private val context: Context) {
     /** Whether [uri]'s content can actually be opened for reading right now. */
     suspend fun canRead(uri: Uri): Boolean = withContext(Dispatchers.IO) {
         runCatching { context.contentResolver.openInputStream(uri)?.use { true } ?: false }
+            .onFailure { Timber.w("Could not open a document: %s", it.javaClass.name) }
             .getOrDefault(false)
     }
 
@@ -119,7 +121,7 @@ class DocumentsRepository(private val context: Context) {
 
         val incomingHash = runCatching {
             context.contentResolver.openInputStream(uri)?.use { sha256(it) }
-        }.getOrNull() ?: return@withContext null
+        }.onFailure { Timber.w("Could not hash an incoming document: %s", it.javaClass.name) }.getOrNull() ?: return@withContext null
         val preferredPaths = preferredUris.filter { it.scheme == "file" }.mapNotNull { it.path }.toSet()
         val match = candidates
             .sortedWith(
@@ -163,6 +165,7 @@ class DocumentsRepository(private val context: Context) {
         val copy = copyIntoOwnStorage(document.uri, document.name, TrashDirName) ?: return null
         val originalDeleted = withContext(Dispatchers.IO) {
             runCatching { DocumentFile.fromSingleUri(context, document.uri)?.delete() }
+                .onFailure { Timber.w("Could not delete a document: %s", it.javaClass.name) }
                 .getOrDefault(false) == true
         }
         if (!originalDeleted) {
@@ -188,7 +191,7 @@ class DocumentsRepository(private val context: Context) {
                     context.contentResolver.openOutputStream(it.uri)?.use { output ->
                         source.inputStream().use { input -> input.copyTo(output) }
                     } != null
-                }.getOrDefault(false)
+                }.onFailure { Timber.w("Could not restore a document: %s", it.javaClass.name) }.getOrDefault(false)
             } ?: false
             if (written) {
                 deleteOwnCopy(trashed.uri)
@@ -215,7 +218,7 @@ class DocumentsRepository(private val context: Context) {
                     document.uri,
                     newName
                 ) != null
-            }.getOrDefault(false)
+            }.onFailure { Timber.w("Could not rename a document: %s", it.javaClass.name) }.getOrDefault(false)
         }
 
     /**
@@ -238,7 +241,7 @@ class DocumentsRepository(private val context: Context) {
         val created = tree.createFile(mimeType, fileName) ?: return@withContext null
         val written = runCatching {
             context.contentResolver.openOutputStream(created.uri)?.use { it.flush() } != null
-        }.getOrDefault(false)
+        }.onFailure { Timber.w("Could not write a new document: %s", it.javaClass.name) }.getOrDefault(false)
         if (!written) {
             created.delete()
             return@withContext null
@@ -270,7 +273,7 @@ class DocumentsRepository(private val context: Context) {
             context.contentResolver.openInputStream(uri)?.use { input ->
                 target.outputStream().use { output -> input.copyTo(output) }
             } != null
-        }.getOrDefault(false)
+        }.onFailure { Timber.w("Could not copy a document: %s", it.javaClass.name) }.getOrDefault(false)
         if (!copied) return@withContext null
         DocumentEntry(
             uri = Uri.fromFile(target),

@@ -17,6 +17,7 @@ import org.prauga.documents.models.DocumentEntry
 import org.prauga.documents.models.TrashedDocument
 import org.prauga.documents.util.isOwnFile
 import java.io.File
+import timber.log.Timber
 
 /** The app's settings, kept in SharedPreferences and observable from Compose. */
 class AppPreferences(context: Context) {
@@ -76,7 +77,7 @@ class AppPreferences(context: Context) {
     fun removeFolder(treeUri: Uri, contentResolver: ContentResolver) {
         runCatching {
             contentResolver.releasePersistableUriPermission(treeUri, FolderPermissionFlags)
-        }
+        }.onFailure { Timber.w("Could not release a folder permission: %s", it.javaClass.name) }
         val updated = folderUris - treeUri.toString()
         prefs.edit { putStringSet(KEY_FOLDERS, updated) }
         folderUris = updated
@@ -221,7 +222,7 @@ class AppPreferences(context: Context) {
                     val o = array.getJSONObject(i)
                     o.getString("key") to ReadingPosition(o.getInt("page"), o.optDouble("offset", 0.0).toFloat())
                 }
-            }.getOrDefault(emptyList())
+            }.onFailure { Timber.w("Dropping unreadable reading positions: %s", it.javaClass.name) }.getOrDefault(emptyList())
         const val MaxRecentDocuments = 50
         const val FolderPermissionFlags =
             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
@@ -253,7 +254,7 @@ class AppPreferences(context: Context) {
             return runCatching {
                 val array = JSONArray(json)
                 (0 until array.length()).map { index -> array.getJSONObject(index).getDocumentEntry() }
-            }.getOrDefault(emptyList())
+            }.onFailure { Timber.w("Dropping unreadable recent documents: %s", it.javaClass.name) }.getOrDefault(emptyList())
         }
 
         fun encodeTrashedDocuments(entries: List<TrashedDocument>): String {
@@ -281,7 +282,7 @@ class AppPreferences(context: Context) {
                         deletedAt = item.getLong("deletedAt")
                     )
                 }
-            }.getOrDefault(emptyList())
+            }.onFailure { Timber.w("Dropping unreadable trash entries: %s", it.javaClass.name) }.getOrDefault(emptyList())
         }
     }
 }

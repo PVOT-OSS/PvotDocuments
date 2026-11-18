@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import java.io.Closeable
 import java.io.File
 import java.util.zip.ZipFile
+import timber.log.Timber
 
 /** A rectangle on a slide, in points from its top-left corner, with a clockwise rotation in
  * degrees about its centre. */
@@ -132,7 +133,7 @@ class Presentation(
     }.getOrNull()
 
     override fun close() {
-        runCatching { zip.close() }
+        runCatching { zip.close() }.onFailure { Timber.w("Could not close a document package: %s", it.javaClass.name) }
         packageFile.delete()
     }
 }

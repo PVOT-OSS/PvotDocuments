@@ -56,6 +56,7 @@ import org.prauga.documents.R
 import org.prauga.documents.data.DocumentsRepository
 import org.prauga.documents.util.ViewerFormat
 import org.prauga.documents.util.parseCsv
+import timber.log.Timber
 
 /** Reads [uri] as [format] and shows it: plain text, code and JSON as scrollable text, CSV as a
  * table, Markdown and HTML as rendered styled text, PDF page by page, DOCX as styled paragraphs.
@@ -312,6 +313,6 @@ private fun readingKey(context: Context, uri: Uri, name: String): String {
         context.contentResolver.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { cursor ->
             if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else null
         }
-    }.getOrNull()
+    }.onFailure { Timber.w("Could not read a document size: %s", it.javaClass.name) }.getOrNull()
     return if (size != null && size > 0) "$name|$size" else uri.toString()
 }
