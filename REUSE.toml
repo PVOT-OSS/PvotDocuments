@@ -1,0 +1,58 @@
+version = 1
+SPDX-PackageName = "Pvot Documents"
+SPDX-PackageSupplier = "PVOT-OSS"
+SPDX-PackageDownloadLocation = "https://github.com/PVOT-OSS/Pvot-Documents"
+
+[[annotations]]
+path = ["gradle/wrapper/**", "gradlew", "gradlew.bat"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2007-2023 Gradle, Inc."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+    ".gitignore",
+    ".gitmodules",
+    ".github/**",
+    "CLAUDE.md",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md",
+    "settings.gradle.kts",
+    "build.gradle.kts",
+    "gradle.properties",
+    "app/proguard-rules.pro",
+    "app/src/main/res/drawable/ic_launcher_*.xml",
+    "app/src/main/res/mipmap-anydpi/**",
+    "app/src/main/res/values/ic_launcher_colors.xml",
+    "app/src/main/res/values-night/**",
+    "app/src/main/res/values/themes.xml",
+    "app/src/main/res/xml/file_paths.xml",
+    "docs/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Debayan G <debz.exe@gmail.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [
+    "gradle/libs.versions.toml",
+    "app/build.gradle.kts",
+    "app/src/main/AndroidManifest.xml",
+    "app/src/main/res/values/strings.xml",
+    "app/src/main/res/xml/data_extraction_rules.xml",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = ["2026 Debayan G <debz.exe@gmail.com>", "2026 Saalim Quadri <danascape@gmail.com>"]
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+[[annotations]]
+path = [
+    "REUSE.toml",
+    ".editorconfig",
+    "PrivacyPolicy.md",
+    "app/src/main/res/values/colors.xml",
+    "app/src/main/res/values/dimens.xml",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Saalim Quadri <danascape@gmail.com>"
+SPDX-License-Identifier = "GPL-3.0-or-later"
