@@ -1,5 +1,6 @@
 package org.prauga.documents
 
+import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -51,10 +52,14 @@ class MainActivity : PvotBaseActivity() {
         incomingUri = incomingDocumentUri(intent)
     }
 
-    /** The document [intent] was opened or shared with, from "Open with" or "Share". */
-    private fun incomingDocumentUri(intent: Intent?): Uri? = when (intent?.action) {
-        Intent.ACTION_VIEW -> intent.data
-        Intent.ACTION_SEND -> intent.parcelableExtraCompat<Uri>(Intent.EXTRA_STREAM)
-        else -> null
+    // Only content:// URIs: a file:// URI from another app could name a file in this app's own
+    // private storage, which the viewer and autosave would then read on that app's behalf.
+    private fun incomingDocumentUri(intent: Intent?): Uri? {
+        val uri = when (intent?.action) {
+            Intent.ACTION_VIEW -> intent.data
+            Intent.ACTION_SEND -> intent.parcelableExtraCompat<Uri>(Intent.EXTRA_STREAM)
+            else -> null
+        }
+        return uri?.takeIf { it.scheme == ContentResolver.SCHEME_CONTENT }
     }
 }
