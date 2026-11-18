@@ -43,6 +43,7 @@ import com.prauga.pvot.designsystem.components.PvotScreenScaffold
 import com.prauga.pvot.designsystem.components.PvotSnackbarHost
 import com.prauga.pvot.designsystem.navigation.PvotTopBar
 import com.prauga.pvot.designsystem.theme.PvotSpacing
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.json.JSONArray
@@ -207,12 +208,14 @@ private fun TextDocumentContent(uri: Uri, format: ViewerFormat, topPadding: Dp) 
 
     suspend fun load() {
         state = UiState.Loading
-        state = runCatching { repository.readText(uri) }
-            .map { text -> if (format == ViewerFormat.Json) prettyPrintJson(text) else text }
-            .fold(
-                onSuccess = { UiState.Success(it) },
-                onFailure = { UiState.Error(readFailedMessage, it) }
-            )
+        state = try {
+            val text = repository.readText(uri)
+            UiState.Success(if (format == ViewerFormat.Json) prettyPrintJson(text) else text)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            UiState.Error(readFailedMessage, e)
+        }
     }
 
     LaunchedEffect(uri) { load() }
