@@ -37,6 +37,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
     }
+    testOptions {
+        unitTests {
+            all {
+                // Robolectric reaches into FileDescriptor internals that newer JDKs keep closed.
+                it.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
+            }
+        }
+    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -64,4 +72,5 @@ dependencies {
 
     implementation(libs.androidx.compose.material3)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
 }
