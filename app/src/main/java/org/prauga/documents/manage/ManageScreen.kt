@@ -25,13 +25,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.PvotEmptyContent
@@ -48,6 +48,7 @@ import com.prauga.pvot.designsystem.components.PvotSegmentedControl
 import com.prauga.pvot.designsystem.components.PvotSheetItem
 import com.prauga.pvot.designsystem.components.button.PvotFab
 import com.prauga.pvot.designsystem.components.button.PvotIconButton
+import com.prauga.pvot.designsystem.components.button.PvotIconButtonDefaults
 import com.prauga.pvot.designsystem.components.list.PvotListGroup
 import com.prauga.pvot.designsystem.components.list.PvotListRow
 import com.prauga.pvot.designsystem.components.textfield.PvotTextField
@@ -260,7 +261,7 @@ private fun ManageContent(
                                         folder.displayName
                                     ),
                                     onClick = { onEvent(ManageEvent.RemoveFolder(folder.treeUri)) },
-                                    size = 36.dp
+                                    size = PvotIconButtonDefaults.SmallSize
                                 )
                             }
                         )
@@ -313,7 +314,7 @@ private fun ManageContent(
                                     searchQuery = ""
                                     onEvent(ManageEvent.Search(""))
                                 },
-                                size = 28.dp
+                                size = dimensionResource(R.dimen.icon_button_compact)
                             )
                         }
                     } else {
@@ -405,7 +406,7 @@ private fun ManageContent(
                                                     document.name
                                                 ),
                                                 onClick = { actionsFor = managed },
-                                                size = 36.dp
+                                                size = PvotIconButtonDefaults.SmallSize
                                             )
                                         }
                                     } else {
@@ -504,7 +505,7 @@ private fun DocumentGridCard(
     val document = managed.document
     PvotCard(
         onClick = onClick,
-        modifier = Modifier.width(108.dp),
+        modifier = Modifier.width(dimensionResource(R.dimen.manage_grid_card_width)),
         colors = if (selected) {
             PvotCardDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
@@ -529,7 +530,7 @@ private fun DocumentGridCard(
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(dimensionResource(R.dimen.manage_grid_check_size))
                     )
                 } else {
                     PvotIconButton(
@@ -539,7 +540,7 @@ private fun DocumentGridCard(
                             document.name
                         ),
                         onClick = onMore,
-                        size = 28.dp
+                        size = dimensionResource(R.dimen.icon_button_compact)
                     )
                 }
             }
@@ -547,7 +548,7 @@ private fun DocumentGridCard(
                 painterResource(R.drawable.ic_file_text),
                 contentDescription = null,
                 tint = documentKind(document.name, document.mimeType).color(),
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(dimensionResource(R.dimen.manage_grid_icon_size))
             )
             Text(
                 text = document.name,
@@ -594,25 +595,25 @@ private fun SelectionToolbar(
                     icon = painterResource(R.drawable.ic_checkbox),
                     contentDescription = stringResource(R.string.manage_select_all),
                     onClick = onSelectAll,
-                    size = 36.dp
+                    size = PvotIconButtonDefaults.SmallSize
                 )
                 PvotIconButton(
                     icon = painterResource(R.drawable.ic_share),
                     contentDescription = stringResource(R.string.manage_share_selected),
                     onClick = onShare,
-                    size = 36.dp
+                    size = PvotIconButtonDefaults.SmallSize
                 )
                 PvotIconButton(
                     icon = painterResource(R.drawable.ic_trash),
                     contentDescription = stringResource(R.string.manage_delete_selected),
                     onClick = onDelete,
-                    size = 36.dp
+                    size = PvotIconButtonDefaults.SmallSize
                 )
                 PvotIconButton(
                     icon = painterResource(R.drawable.ic_x),
                     contentDescription = stringResource(R.string.manage_cancel_selection),
                     onClick = onCancel,
-                    size = 36.dp
+                    size = PvotIconButtonDefaults.SmallSize
                 )
             }
         }

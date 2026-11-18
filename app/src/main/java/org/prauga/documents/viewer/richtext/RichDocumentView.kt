@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -64,6 +65,7 @@ import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.prauga.documents.R
 import org.prauga.documents.formats.richtext.DocBlock
 import org.prauga.documents.formats.richtext.DocImage
 import org.prauga.documents.formats.richtext.DocPageBreak
@@ -73,6 +75,7 @@ import org.prauga.documents.formats.richtext.ParagraphAlign
 import org.prauga.documents.formats.richtext.RichDocument
 import org.prauga.documents.formats.richtext.TextPosition
 import org.prauga.documents.formats.richtext.TextRun
+import org.prauga.documents.viewer.DocumentColors
 import org.prauga.documents.viewer.pdf.OpenLinkDialog
 import org.prauga.documents.viewer.pdf.isOpenableLink
 
@@ -142,7 +145,7 @@ private fun Block(block: DocBlock, document: RichDocument) {
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = PvotSpacing.M)
-                .height(1.dp)
+                .height(dimensionResource(R.dimen.document_rule))
                 .background(MaterialTheme.colorScheme.outlineVariant)
         )
     }
@@ -159,9 +162,11 @@ private fun Paragraph(paragraph: DocParagraph) {
     val background = LocalCellFill.current ?: MaterialTheme.colorScheme.background
     val defaultColor = MaterialTheme.colorScheme.onBackground
     val linkColor = MaterialTheme.colorScheme.primary
+    val ink = DocumentColors.ink
+    val paper = DocumentColors.paper
     val baseStyle = paragraph.heading?.let { headingStyle(it) } ?: MaterialTheme.typography.bodyLarge
-    val text = remember(paragraph, scale, background, defaultColor, linkColor) {
-        buildParagraphText(paragraph.runs, scale, background, defaultColor, linkColor, openLink)
+    val text = remember(paragraph, scale, background, defaultColor, linkColor, ink, paper) {
+        buildParagraphText(paragraph.runs, scale, background, defaultColor, linkColor, ink, paper, openLink)
     }
     val style = baseStyle.copy(
         color = defaultColor,
@@ -196,7 +201,8 @@ private fun Paragraph(paragraph: DocParagraph) {
     }
 }
 
-private val ListMarkerWidth = 32.dp
+private val ListMarkerWidth: Dp
+    @Composable get() = dimensionResource(R.dimen.document_list_marker_width)
 
 @Composable
 private fun headingStyle(level: Int): TextStyle = when (level) {
@@ -213,6 +219,8 @@ private fun buildParagraphText(
     background: Color,
     defaultColor: Color,
     linkColor: Color,
+    ink: Color,
+    paper: Color,
     openLink: (String) -> Unit,
 ): AnnotatedString = buildAnnotatedString {
     for (run in runs) {
@@ -229,7 +237,7 @@ private fun buildParagraphText(
             },
             color = when {
                 s.link != null && s.color == null -> linkColor
-                else -> readableColor(s.color?.let { Color(it) }, highlight ?: background, defaultColor)
+                else -> readableColor(s.color?.let { Color(it) }, highlight ?: background, defaultColor, ink, paper)
             },
             background = highlight ?: Color.Unspecified,
             fontSize = s.sizePt?.takeIf { scale.bodySize != TextUnit.Unspecified }?.let {
@@ -260,10 +268,10 @@ private val SmallPositionSize = 0.75.em
 /** The document's own text color when it reads against what's behind it; otherwise the theme's
  * text color, or black or white over a highlight. Documents written on white paper often spell
  * out black text, which would vanish on a dark theme. */
-private fun readableColor(own: Color?, behind: Color, default: Color): Color {
+private fun readableColor(own: Color?, behind: Color, default: Color, ink: Color, paper: Color): Color {
     if (own != null && contrast(own, behind) >= MinContrast) return own
     if (behind == Color.Unspecified || contrast(default, behind) >= MinContrast) return default
-    return if (behind.luminance() > 0.5f) Color.Black else Color.White
+    return if (behind.luminance() > 0.5f) ink else paper
 }
 
 private fun contrast(a: Color, b: Color): Float {
@@ -285,7 +293,7 @@ private fun Table(table: DocTable, document: RichDocument) {
         Column(
             Modifier
                 .horizontalScroll(rememberScrollState())
-                .border(1.dp, grid),
+                .border(dimensionResource(R.dimen.document_rule), grid),
         ) {
             for (row in table.rows) {
                 Row(Modifier.height(IntrinsicSize.Min)) {
@@ -295,11 +303,11 @@ private fun Table(table: DocTable, document: RichDocument) {
                                 .width(columnWidth * cell.colSpan)
                                 .fillMaxHeight()
                                 .then(if (cell.fill != null && !cell.covered) Modifier.background(Color(cell.fill)) else Modifier)
-                                .border(0.5.dp, grid)
+                                .border(dimensionResource(R.dimen.document_grid_line), grid)
                                 .padding(PvotSpacing.S),
                         ) {
                             CompositionLocalProvider(LocalCellFill provides cell.fill?.let { Color(it) }) {
-                                Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                                Column(verticalArrangement = Arrangement.Top) {
                                     for (block in cell.blocks) Block(block, document)
                                 }
                             }
@@ -311,7 +319,8 @@ private fun Table(table: DocTable, document: RichDocument) {
     }
 }
 
-private val MinColumnWidth = 96.dp
+private val MinColumnWidth: Dp
+    @Composable get() = dimensionResource(R.dimen.document_table_min_column_width)
 
 /** A picture, read from the document when it comes into view and decoded at screen width. Shown
  * at its intended size when that fits, otherwise scaled down to the width. */

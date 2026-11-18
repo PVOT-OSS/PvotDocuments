@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,8 +57,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.prauga.pvot.coreui.PvotEmptyContent
 import com.prauga.pvot.designsystem.components.PvotTabRow
 import com.prauga.pvot.designsystem.theme.PvotSpacing
@@ -71,6 +72,7 @@ import org.prauga.documents.formats.sheet.SheetCell
 import org.prauga.documents.formats.sheet.SheetRow
 import org.prauga.documents.formats.sheet.Workbook
 import org.prauga.documents.formats.sheet.columnName
+import org.prauga.documents.viewer.DocumentColors
 import kotlin.math.max
 
 /** A grid of plain rows (CSV), shown the same way as a one-sheet workbook. */
@@ -141,13 +143,14 @@ fun SpreadsheetView(workbook: Workbook, topPadding: Dp, modifier: Modifier = Mod
  * default font, about 7px each plus 5px of padding, and heights are in points. */
 private const val PxPerChar = 7f
 private const val ColumnPadding = 5f
-private val MinRowHeight = 24.dp
-private val HeaderHeight = 24.dp
-private val RowHeaderWidth = 44.dp
-private val CellPadding = 4.dp
+private val MinRowHeight: Dp
+    @Composable get() = dimensionResource(R.dimen.sheet_min_row_height)
+private val HeaderHeight: Dp
+    @Composable get() = dimensionResource(R.dimen.sheet_header_height)
+private val RowHeaderWidth: Dp
+    @Composable get() = dimensionResource(R.dimen.sheet_row_header_width)
 private const val MinZoom = 0.5f
 private const val MaxZoom = 3f
-private val CellTextSize = 12.sp
 
 @Composable
 private fun SheetGrid(sheet: Sheet, styles: List<CellStyle>, modifier: Modifier) {
@@ -184,12 +187,16 @@ private fun SheetGrid(sheet: Sheet, styles: List<CellStyle>, modifier: Modifier)
     }
 
     val merges = remember(sheet) { MergeIndex(sheet.merges) }
-    val colors = SheetColors(
+    val look = SheetLook(
         background = MaterialTheme.colorScheme.background,
         text = MaterialTheme.colorScheme.onSurface,
         headerBackground = MaterialTheme.colorScheme.surfaceContainer,
         headerText = MaterialTheme.colorScheme.onSurfaceVariant,
         grid = MaterialTheme.colorScheme.outlineVariant,
+        ink = DocumentColors.ink,
+        paper = DocumentColors.paper,
+        textSize = MaterialTheme.typography.bodySmall.fontSize,
+        cellPadding = dimensionResource(R.dimen.sheet_cell_padding),
     )
     val sheetDescription = stringResource(R.string.viewer_sheet_description, sheet.rowCount, sheet.colCount)
 
@@ -230,21 +237,21 @@ private fun SheetGrid(sheet: Sheet, styles: List<CellStyle>, modifier: Modifier)
         ) {
             items(count = sheet.rowCount, key = { it }) { r ->
                 if (r in sheet.hiddenRows) {
-                    Spacer(Modifier.height(0.dp))
+                    Spacer(Modifier.height(Dp.Hairline))
                 } else {
                     val heightPx = max(
                         with(density) { MinRowHeight.toPx() },
                         sheet.row(r)?.heightPt?.let { with(density) { (it * PtToDp).dp.toPx() } } ?: 0f,
                     ) * zoom
                     Canvas(Modifier.fillMaxWidth().height(with(density) { heightPx.toDp() })) {
-                        drawSheetRow(sheet, r, styles, edges, scrollX, rowHeaderPx, zoom, measurer, colors, merges)
+                        drawSheetRow(sheet, r, styles, edges, scrollX, rowHeaderPx, zoom, measurer, look, merges)
                     }
                 }
             }
         }
         // Column letters, fixed at the top.
         Canvas(Modifier.fillMaxWidth().height(with(density) { headerPx.toDp() })) {
-            drawColumnHeader(sheet, edges, scrollX, rowHeaderPx, zoom, measurer, colors)
+            drawColumnHeader(sheet, edges, scrollX, rowHeaderPx, zoom, measurer, look)
         }
     }
 }
@@ -257,12 +264,16 @@ private const val TextCacheSize = 512
 /** Empty columns shown past the last one in use. */
 private const val TrailingColumns = 3
 
-private class SheetColors(
+private class SheetLook(
     val background: Color,
     val text: Color,
     val headerBackground: Color,
     val headerText: Color,
     val grid: Color,
+    val ink: Color,
+    val paper: Color,
+    val textSize: TextUnit,
+    val cellPadding: Dp,
 )
 
 /** Merged ranges by the row they start on, and a lookup for the cells they cover. */
@@ -307,10 +318,10 @@ private fun DrawScope.drawColumnHeader(
     rowHeaderPx: Float,
     zoom: Float,
     measurer: TextMeasurer,
-    colors: SheetColors,
+    look: SheetLook,
 ) {
-    drawRect(colors.headerBackground)
-    val style = TextStyle(fontSize = CellTextSize * zoom.coerceAtLeast(1f), color = colors.headerText, textAlign = TextAlign.Center)
+    drawRect(look.headerBackground)
+    val style = TextStyle(fontSize = look.textSize * zoom.coerceAtLeast(1f), color = look.headerText, textAlign = TextAlign.Center)
     clipRect(left = rowHeaderPx) {
         var c = firstColumnAt(edges, scrollX)
         while (c < edges.size - 1) {
@@ -319,12 +330,12 @@ private fun DrawScope.drawColumnHeader(
             val width = edges[c + 1] - edges[c]
             if (width > 0f) {
                 drawCellText(measurer, columnName(c), style, left, 0f, width, size.height, wrap = false, align = TextAlign.Center)
-                drawLine(colors.grid, Offset(left + width, 0f), Offset(left + width, size.height))
+                drawLine(look.grid, Offset(left + width, 0f), Offset(left + width, size.height))
             }
             c++
         }
     }
-    drawLine(colors.grid, Offset(0f, size.height), Offset(size.width, size.height))
+    drawLine(look.grid, Offset(0f, size.height), Offset(size.width, size.height))
 }
 
 private fun DrawScope.drawSheetRow(
@@ -336,12 +347,12 @@ private fun DrawScope.drawSheetRow(
     rowHeaderPx: Float,
     zoom: Float,
     measurer: TextMeasurer,
-    colors: SheetColors,
+    look: SheetLook,
     merges: MergeIndex,
 ) {
     val row = sheet.row(r)
-    val textSize = CellTextSize * zoom
-    val pad = CellPadding.toPx() * zoom
+    val textSize = look.textSize * zoom
+    val pad = look.cellPadding.toPx() * zoom
     clipRect(left = rowHeaderPx) {
         val firstVisible = firstColumnAt(edges, scrollX)
         // Grid lines for the visible columns.
@@ -350,11 +361,11 @@ private fun DrawScope.drawSheetRow(
             val right = rowHeaderPx + edges[c + 1] - scrollX
             if (right - (edges[c + 1] - edges[c]) > size.width) break
             if (merges.isEmpty || !merges.covered(r, c + 1) || merges.covered(r, c)) {
-                drawLine(colors.grid, Offset(right, 0f), Offset(right, size.height))
+                drawLine(look.grid, Offset(right, 0f), Offset(right, size.height))
             }
             c++
         }
-        drawLine(colors.grid, Offset(rowHeaderPx, size.height), Offset(size.width, size.height))
+        drawLine(look.grid, Offset(rowHeaderPx, size.height), Offset(size.width, size.height))
 
         val cells = row?.cells ?: return@clipRect
         // Start from a cell that may spill text into the first visible column.
@@ -385,7 +396,7 @@ private fun DrawScope.drawSheetRow(
                 val drawWidth = if (spills) edges[nextCol.coerceAtMost(edges.size - 1)] - edges[cell.col] else ownWidth
                 val textStyle = TextStyle(
                     fontSize = textSize,
-                    color = readableTextColor(style, colors),
+                    color = readableTextColor(style, look),
                     fontWeight = if (style.bold) FontWeight.Bold else FontWeight.Normal,
                     fontStyle = if (style.italic) FontStyle.Italic else FontStyle.Normal,
                     textDecoration = when {
@@ -404,26 +415,26 @@ private fun DrawScope.drawSheetRow(
         }
     }
     // Row number, fixed at the start.
-    drawRect(colors.headerBackground, size = Size(rowHeaderPx, size.height))
+    drawRect(look.headerBackground, size = Size(rowHeaderPx, size.height))
     drawCellText(
         measurer,
         (r + 1).toString(),
-        TextStyle(fontSize = CellTextSize * zoom.coerceAtLeast(1f), color = colors.headerText, textAlign = TextAlign.Center),
+        TextStyle(fontSize = look.textSize * zoom.coerceAtLeast(1f), color = look.headerText, textAlign = TextAlign.Center),
         0f, 0f, rowHeaderPx, size.height, wrap = false, align = TextAlign.Center,
     )
-    drawLine(colors.grid, Offset(rowHeaderPx, 0f), Offset(rowHeaderPx, size.height))
-    drawLine(colors.grid, Offset(0f, size.height), Offset(rowHeaderPx, size.height))
+    drawLine(look.grid, Offset(rowHeaderPx, 0f), Offset(rowHeaderPx, size.height))
+    drawLine(look.grid, Offset(0f, size.height), Offset(rowHeaderPx, size.height))
 }
 
 /** The cell's own text color when it reads against what's behind it; otherwise the theme's text
  * color, or black or white against a fill. A sheet made on white paper often spells out black
  * text, which would vanish on a dark theme. */
-private fun readableTextColor(style: CellStyle, colors: SheetColors): Color {
-    val background = style.fill?.let { Color(it) } ?: colors.background
+private fun readableTextColor(style: CellStyle, look: SheetLook): Color {
+    val background = style.fill?.let { Color(it) } ?: look.background
     val own = style.textColor?.let { Color(it) }
     if (own != null && contrast(own, background) >= MinContrast) return own
-    if (style.fill == null) return colors.text
-    return if (background.luminance() > 0.5f) Color.Black else Color.White
+    if (style.fill == null) return look.text
+    return if (background.luminance() > 0.5f) look.ink else look.paper
 }
 
 private fun contrast(a: Color, b: Color): Float {

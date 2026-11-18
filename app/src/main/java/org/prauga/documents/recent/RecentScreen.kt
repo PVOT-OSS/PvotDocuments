@@ -15,13 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.components.PvotScreen
 import com.prauga.pvot.designsystem.components.PvotScreenDefaults
 import com.prauga.pvot.designsystem.components.button.PvotIconButton
+import com.prauga.pvot.designsystem.components.button.PvotIconButtonDefaults
 import com.prauga.pvot.designsystem.components.list.PvotListGroup
 import com.prauga.pvot.designsystem.components.list.PvotListRow
 import com.prauga.pvot.designsystem.motion.pvotReveal
@@ -130,7 +130,7 @@ private fun RecentContent(
                                             document.name
                                         ),
                                         onClick = { onEvent(RecentEvent.Share(document)) },
-                                        size = 36.dp
+                                        size = PvotIconButtonDefaults.SmallSize
                                     )
                                 },
                                 onClick = { onEvent(RecentEvent.Open(document)) }

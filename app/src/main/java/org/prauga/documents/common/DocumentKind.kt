@@ -1,8 +1,10 @@
 package org.prauga.documents.common
 
+import androidx.annotation.ColorRes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import org.prauga.documents.R
 import org.prauga.documents.formats.slides.Presentation
 
@@ -15,17 +17,17 @@ import org.prauga.documents.formats.slides.Presentation
  * and warning. [Other] is the one exception, reading the theme's primary so an unrecognized type
  * still looks like the rest of the app rather than carrying its own made-up color.
  */
-enum class DocumentKind(private val fixedColor: Color?) {
-    Pdf(Color(0xFFE53935)),
-    Word(Color(0xFF4285F4)),
-    Spreadsheet(Color(0xFF34A853)),
-    Presentation(Color(0xFFD84315)),
-    Html(Color(0xFFFB8C00)),
-    PlainText(Color(0xFF78909C)),
+enum class DocumentKind(@param:ColorRes private val colorRes: Int?) {
+    Pdf(R.color.document_kind_pdf),
+    Word(R.color.document_kind_word),
+    Spreadsheet(R.color.document_kind_spreadsheet),
+    Presentation(R.color.document_kind_presentation),
+    Html(R.color.document_kind_html),
+    PlainText(R.color.document_kind_text),
     Other(null);
 
     @Composable
-    fun color(): Color = fixedColor ?: MaterialTheme.colorScheme.primary
+    fun color(): Color = colorRes?.let { colorResource(it) } ?: MaterialTheme.colorScheme.primary
 
     /** The label a filter chip shows for this kind, such as on the Recent tab. */
     val labelRes: Int

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="document_grid_line">0.5dp</dimen>
+    <dimen name="document_rule">1dp</dimen>
+    <dimen name="document_list_marker_width">32dp</dimen>
+    <dimen name="document_table_min_column_width">96dp</dimen>
+    <dimen name="icon_button_compact">28dp</dimen>
+    <dimen name="manage_grid_card_width">108dp</dimen>
+    <dimen name="manage_grid_check_size">22dp</dimen>
+    <dimen name="manage_grid_icon_size">36dp</dimen>
+    <dimen name="markdown_quote_bar_width">3dp</dimen>
+    <dimen name="pdf_auto_scroll_edge">56dp</dimen>
+    <dimen name="pdf_auto_scroll_max_speed">1200dp</dimen>
+    <dimen name="pdf_search_bar_clearance">96dp</dimen>
+    <dimen name="pdf_selection_handle_size">24dp</dimen>
+    <dimen name="pdf_thumbnail_current_outline">2dp</dimen>
+    <dimen name="pdf_thumbnail_min_width">96dp</dimen>
+    <dimen name="pdf_thumbnail_outline">1dp</dimen>
+    <dimen name="sheet_cell_padding">4dp</dimen>
+    <dimen name="sheet_header_height">24dp</dimen>
+    <dimen name="sheet_min_row_height">24dp</dimen>
+    <dimen name="sheet_row_header_width">44dp</dimen>
+</resources>

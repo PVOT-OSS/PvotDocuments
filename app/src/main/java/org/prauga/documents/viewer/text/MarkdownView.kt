@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -30,9 +30,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.TextUnit
+import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
+import org.prauga.documents.R
 import org.prauga.documents.formats.markdown.MarkdownBlock
 import org.prauga.documents.formats.markdown.parseMarkdown
 
@@ -60,9 +61,10 @@ fun MarkdownView(text: String, topPadding: Dp, modifier: Modifier = Modifier) {
 
 @Composable
 private fun MarkdownBlockView(block: MarkdownBlock, linkColor: Color) {
+    val codeFontSize = MaterialTheme.typography.bodySmall.fontSize
     when (block) {
         is MarkdownBlock.Heading -> Text(
-            text = inlineMarkdown(block.text, linkColor),
+            text = inlineMarkdown(block.text, linkColor, codeFontSize),
             style = headingStyle(block.level),
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -70,7 +72,7 @@ private fun MarkdownBlockView(block: MarkdownBlock, linkColor: Color) {
         )
 
         is MarkdownBlock.Paragraph -> Text(
-            text = inlineMarkdown(block.text, linkColor),
+            text = inlineMarkdown(block.text, linkColor, codeFontSize),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(vertical = PvotSpacing.XS)
@@ -79,7 +81,7 @@ private fun MarkdownBlockView(block: MarkdownBlock, linkColor: Color) {
         is MarkdownBlock.ListItem -> Text(
             text = buildAnnotatedString {
                 append(if (block.ordered) "${block.number}.  " else "•  ")
-                append(inlineMarkdown(block.text, linkColor))
+                append(inlineMarkdown(block.text, linkColor, codeFontSize))
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground,
@@ -89,7 +91,7 @@ private fun MarkdownBlockView(block: MarkdownBlock, linkColor: Color) {
         is MarkdownBlock.CodeBlock -> Box(
             modifier = Modifier
                 .padding(vertical = PvotSpacing.S)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant, PvotShapes.Small)
                 .horizontalScroll(rememberScrollState())
         ) {
             Text(
@@ -104,11 +106,11 @@ private fun MarkdownBlockView(block: MarkdownBlock, linkColor: Color) {
         is MarkdownBlock.Quote -> Row(modifier = Modifier.padding(vertical = PvotSpacing.XS)) {
             Box(
                 modifier = Modifier
-                    .width(3.dp)
+                    .width(dimensionResource(R.dimen.markdown_quote_bar_width))
                     .background(MaterialTheme.colorScheme.primary)
             )
             Text(
-                text = inlineMarkdown(block.text, linkColor),
+                text = inlineMarkdown(block.text, linkColor, codeFontSize),
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -137,7 +139,7 @@ private val InlineRegex = Regex(
 /** [line]'s inline markers (`**bold**`, `_italic_`, `` `code` ``, `[text](url)`) turned into spans
  * on an [AnnotatedString] — the same line text the block parser kept untouched, styled now that a
  * composable (and its theme colors) is available. */
-private fun inlineMarkdown(line: String, linkColor: Color): AnnotatedString = buildAnnotatedString {
+private fun inlineMarkdown(line: String, linkColor: Color, codeFontSize: TextUnit): AnnotatedString = buildAnnotatedString {
     var last = 0
     for (match in InlineRegex.findAll(line)) {
         if (match.range.first > last) append(line.substring(last, match.range.first))
@@ -150,7 +152,7 @@ private fun inlineMarkdown(line: String, linkColor: Color): AnnotatedString = bu
         when {
             bold != null -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(bold.value) }
             code != null -> withStyle(
-                SpanStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp)
+                SpanStyle(fontFamily = FontFamily.Monospace, fontSize = codeFontSize)
             ) { append(code.value) }
             linkText != null && linkUrl != null -> withLink(LinkAnnotation.Url(linkUrl.value)) {
                 withStyle(SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)) {

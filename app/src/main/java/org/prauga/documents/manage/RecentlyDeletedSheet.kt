@@ -11,9 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.prauga.pvot.designsystem.components.PvotBottomSheet
 import com.prauga.pvot.designsystem.components.button.PvotIconButton
+import com.prauga.pvot.designsystem.components.button.PvotIconButtonDefaults
 import com.prauga.pvot.designsystem.components.list.PvotListRow
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
@@ -69,7 +69,7 @@ fun RecentlyDeletedSheet(
                                 document.name
                             ),
                             onClick = { onRestore(trashed) },
-                            size = 36.dp
+                            size = PvotIconButtonDefaults.SmallSize
                         )
                         PvotIconButton(
                             icon = painterResource(R.drawable.ic_x),
@@ -78,7 +78,7 @@ fun RecentlyDeletedSheet(
                                 document.name
                             ),
                             onClick = { onDeleteForever(trashed) },
-                            size = 36.dp
+                            size = PvotIconButtonDefaults.SmallSize
                         )
                     }
                 }

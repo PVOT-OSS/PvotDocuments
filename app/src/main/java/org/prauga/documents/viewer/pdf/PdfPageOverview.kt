@@ -41,13 +41,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import com.prauga.pvot.designsystem.theme.PvotShapes
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
@@ -148,6 +148,9 @@ private fun PageThumbnail(
     }
 }
 
-private val ThumbnailMinWidth = 96.dp
-private val Outline = 1.dp
-private val CurrentOutline = 2.dp
+private val ThumbnailMinWidth: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_thumbnail_min_width)
+private val Outline: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_thumbnail_outline)
+private val CurrentOutline: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_thumbnail_current_outline)

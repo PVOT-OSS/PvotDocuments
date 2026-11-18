@@ -81,6 +81,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.toClipEntry
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -90,7 +91,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import com.prauga.pvot.designsystem.motion.PvotDurations
 import com.prauga.pvot.designsystem.motion.PvotMotion
 import com.prauga.pvot.designsystem.theme.PvotSpacing
@@ -103,6 +103,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.prauga.documents.R
+import org.prauga.documents.viewer.DocumentColors
 import org.prauga.documents.viewer.data.ReadingPosition
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -691,19 +692,23 @@ internal val DarkPageFilter = ColorFilter.colorMatrix(
 )
 
 /** The colour of a page before (or under) its render: paper white, or black with dark pages. */
-internal fun pagePaper(dark: Boolean): Color = if (dark) Color.Black else Color.White
+@Composable
+internal fun pagePaper(dark: Boolean): Color = if (dark) DocumentColors.darkPaper else DocumentColors.paper
 
 private const val DoubleTapZoom = 2.5f
 private const val SavePositionMillis = 1000L
 private const val SelectionTextLimit = 100_000
 /** How close to the top or bottom of the visible document a selection drag starts scrolling. */
-private val AutoScrollEdge = 56.dp
+private val AutoScrollEdge: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_auto_scroll_edge)
 /** Auto-scroll speed per second with the finger right at the edge. */
-private val AutoScrollMaxSpeed = 1200.dp
+private val AutoScrollMaxSpeed: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_auto_scroll_max_speed)
 private const val SearchFromSelectionLimit = 100
 private const val RestoreLayoutTimeoutMillis = 1000L
 
-private val SearchBarClearance = 96.dp
+private val SearchBarClearance: Dp
+    @Composable get() = dimensionResource(R.dimen.pdf_search_bar_clearance)
 private const val SearchDebounceMillis = 250L
 private const val HiResSettleMillis = 150L
 private const val PageIndicatorHideMillis = 1500L
@@ -1158,7 +1163,7 @@ private fun SelectionHandle(
         onDispose { if (dragging.value) currentOnDragEnd.value() }
     }
     val at = position() ?: return
-    val handleSize = 24.dp
+    val handleSize = dimensionResource(R.dimen.pdf_selection_handle_size)
     val half = with(LocalDensity.current) { (handleSize / 2).roundToPx() }
     // The handle moves as the selection changes; keying the gesture on its position would restart
     // it, and drop the drag, on every move.

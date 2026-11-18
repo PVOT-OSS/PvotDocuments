@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="document_kind_pdf">#FFE53935</color>
+    <color name="document_kind_word">#FF4285F4</color>
+    <color name="document_kind_spreadsheet">#FF34A853</color>
+    <color name="document_kind_presentation">#FFD84315</color>
+    <color name="document_kind_html">#FFFB8C00</color>
+    <color name="document_kind_text">#FF78909C</color>
+    <color name="document_paper">#FFFFFFFF</color>
+    <color name="document_paper_dark">#FF000000</color>
+    <color name="document_ink">#FF000000</color>
+    <color name="document_grid">#FF888888</color>
+</resources>

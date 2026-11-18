@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -70,7 +71,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +90,7 @@ import org.prauga.documents.formats.slides.SlideParagraph
 import org.prauga.documents.formats.slides.SlideShape
 import org.prauga.documents.formats.slides.SlideText
 import org.prauga.documents.formats.slides.SlideTextAnchor
+import org.prauga.documents.viewer.DocumentColors
 import org.prauga.documents.viewer.pdf.OpenLinkDialog
 import org.prauga.documents.viewer.pdf.PdfNavigationState
 import org.prauga.documents.viewer.pdf.PdfZoomState
@@ -177,7 +178,7 @@ private fun SlideCard(presentation: Presentation, slide: Slide, index: Int) {
             .fillMaxWidth()
             .aspectRatio(presentation.width / presentation.height)
             // A thin edge, so a white slide stands apart from a light background.
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            .border(dimensionResource(R.dimen.document_rule), MaterialTheme.colorScheme.outlineVariant)
             .clipToBounds()
             .semantics { contentDescription = description },
     ) {
@@ -186,8 +187,9 @@ private fun SlideCard(presentation: Presentation, slide: Slide, index: Int) {
         // Pixels per point at this slide's on-screen size.
         val scale = widthPx / presentation.width
         val background = slide.background
+        val paper = DocumentColors.paper
         Canvas(Modifier.fillMaxSize()) {
-            drawRect(if (background is SlideFill.Solid) Color(background.color) else Color.White)
+            drawRect(if (background is SlideFill.Solid) Color(background.color) else paper)
         }
         if (background is SlideFill.Picture) {
             PictureFill(presentation, background.path, Modifier.fillMaxSize(), widthPx.roundToInt())
@@ -295,6 +297,7 @@ private fun TextBody(text: SlideText, scale: Float, modifier: Modifier) {
 
 @Composable
 private fun SlideParagraphView(paragraph: SlideParagraph, textScale: Float, layoutScale: Float, wrap: Boolean) {
+    val ink = DocumentColors.ink
     val density = LocalDensity.current
     val openLink = LocalSlideLink.current
     fun pt(value: Float): Dp = with(density) { (value * layoutScale).toDp() }
@@ -303,7 +306,7 @@ private fun SlideParagraphView(paragraph: SlideParagraph, textScale: Float, layo
         fontSize = with(density) { sizePx.toSp() },
         lineHeight = (LineHeightFactor * paragraph.lineSpacing).em,
         lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None),
-        color = Color.Black,
+        color = ink,
         textAlign = when (paragraph.align) {
             ParagraphAlign.Start -> TextAlign.Start
             ParagraphAlign.Center -> TextAlign.Center
@@ -316,7 +319,7 @@ private fun SlideParagraphView(paragraph: SlideParagraph, textScale: Float, layo
         Box(Modifier.padding(top = top).height(with(density) { (sizePx * LineHeightFactor * paragraph.lineSpacing).toDp() }))
         return
     }
-    val text = remember(paragraph, textScale) { slideText(paragraph, textScale, density, openLink) }
+    val text = remember(paragraph, textScale) { slideText(paragraph, textScale, density, ink, openLink) }
     val bullet = paragraph.bullet
     // A negative indent hangs the bullet to the left of where the text starts.
     val hang = (-paragraph.indentPt).coerceAtLeast(0f)
@@ -325,7 +328,7 @@ private fun SlideParagraphView(paragraph: SlideParagraph, textScale: Float, layo
         if (bullet != null) {
             Text(
                 text = bullet,
-                style = baseStyle.copy(color = paragraph.runs.first().style.color?.let { Color(it) } ?: Color.Black, textAlign = TextAlign.Start),
+                style = baseStyle.copy(color = paragraph.runs.first().style.color?.let { Color(it) } ?: ink, textAlign = TextAlign.Start),
                 modifier = if (hang > 0f) Modifier.width(pt(hang)) else Modifier.padding(end = pt(BulletGapPt)),
                 softWrap = false,
             )
@@ -344,6 +347,7 @@ private fun slideText(
     paragraph: SlideParagraph,
     textScale: Float,
     density: androidx.compose.ui.unit.Density,
+    ink: Color,
     openLink: (String) -> Unit,
 ): AnnotatedString = buildAnnotatedString {
     for (run in paragraph.runs) {
@@ -358,7 +362,7 @@ private fun slideText(
                 s.strike -> TextDecoration.LineThrough
                 else -> null
             },
-            color = s.color?.let { Color(it) } ?: Color.Black,
+            color = s.color?.let { Color(it) } ?: ink,
             background = s.highlight?.let { Color(it) } ?: Color.Unspecified,
             baselineShift = when (s.position) {
                 TextPosition.Superscript -> BaselineShift.Superscript
@@ -380,9 +384,9 @@ private fun slideText(
 private fun TableView(table: SlideShape.Table, scale: Float) {
     val density = LocalDensity.current
     fun pt(value: Float): Dp = with(density) { (value * scale).toDp() }
-    Column(Modifier.border(1.dp, GridColor)) {
+    Column(Modifier.border(dimensionResource(R.dimen.document_rule), DocumentColors.grid)) {
         table.cells.forEachIndexed { r, row ->
-            Row(Modifier.height(pt(table.rowHeights.getOrElse(r) { 0f }).coerceAtLeast(1.dp))) {
+            Row(Modifier.height(pt(table.rowHeights.getOrElse(r) { 0f }).coerceAtLeast(dimensionResource(R.dimen.document_rule)))) {
                 var c = 0
                 for (cell in row) {
                     val width = (c until c + cell.colSpan).sumOf { (table.columnWidths.getOrElse(it) { 0f }).toDouble() }.toFloat()
@@ -397,7 +401,7 @@ private fun TableView(table: SlideShape.Table, scale: Float) {
                             .width(pt(width))
                             .fillMaxHeight()
                             .then(if (cell.fill != null) Modifier.background(Color(cell.fill)) else Modifier)
-                            .border(0.5.dp, GridColor),
+                            .border(dimensionResource(R.dimen.document_grid_line), DocumentColors.grid),
                     ) {
                         if (!cell.covered) TextBody(cell.text, scale, Modifier.fillMaxSize())
                     }
@@ -408,7 +412,6 @@ private fun TableView(table: SlideShape.Table, scale: Float) {
 }
 
 /** Table lines, drawn as on a slide's paper rather than in the app's theme. */
-private val GridColor = Color.Gray
 
 /** A picture filling its box (a picture background or picture fill). */
 @Composable
