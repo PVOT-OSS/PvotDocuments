@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -44,8 +45,10 @@ import com.prauga.pvot.designsystem.components.PvotSnackbarHost
 import com.prauga.pvot.designsystem.navigation.PvotTopBar
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import org.prauga.documents.AppPreferences
@@ -81,11 +84,14 @@ fun DocumentViewerScreen(
             snackbar.showSnackbar(notice)
         }
     }
-    val readingKey = remember(uri, name) { readingKey(context, uri, name) }
+    val readingKey by produceState<String?>(null, uri, name) {
+        value = withContext(Dispatchers.IO) { readingKey(context, uri, name) }
+    }
     val pdfReading = remember(readingKey, preferences.darkPdfPages) {
+        val key = readingKey ?: return@remember null
         PdfReadingSettings(
-            initialPosition = preferences.readingPosition(readingKey),
-            onPositionChange = { preferences.saveReadingPosition(readingKey, it) },
+            initialPosition = preferences.readingPosition(key),
+            onPositionChange = { preferences.saveReadingPosition(key, it) },
             pageFilter = if (preferences.darkPdfPages) DarkPageFilter else null,
         )
     }
@@ -164,6 +170,13 @@ fun DocumentViewerScreen(
         }
     ) { padding ->
         if (format == ViewerFormat.Pdf) {
+            if (pdfReading == null) {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding()),
+                    contentAlignment = Alignment.Center
+                ) { PvotLoadingContent() }
+                return@PvotScreenScaffold
+            }
             PdfView(
                 uri = uri,
                 topPadding = padding.calculateTopPadding(),
