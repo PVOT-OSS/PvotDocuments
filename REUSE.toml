@@ -52,6 +52,7 @@ path = [
     "PrivacyPolicy.md",
     "app/src/main/res/values/colors.xml",
     "app/src/main/res/values/dimens.xml",
+    "app/src/test/resources/**",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Saalim Quadri <danascape@gmail.com>"
