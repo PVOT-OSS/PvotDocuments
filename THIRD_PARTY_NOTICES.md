@@ -19,6 +19,11 @@ Dependency injection uses [Hilt](https://dagger.dev/hilt/) (`com.google.dagger:h
 `androidx.hilt`), Copyright The Dagger Authors and The Android Open Source Project, Apache License
 2.0. The license text is in `LICENSES/Apache-2.0.txt`.
 
+## Timber
+
+Debug builds log through [Timber](https://github.com/JakeWharton/timber), Copyright 2013 Jake
+Wharton, Apache License 2.0. The license text is in `LICENSES/Apache-2.0.txt`.
+
 ## Tabler Icons
 
 The icons in `app/src/main/res/drawable/` (`ic_chevron_down.xml`, `ic_chevron_up.xml`,

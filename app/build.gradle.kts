@@ -58,6 +58,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
     implementation(libs.pdfium.android)
+    implementation(libs.timber)
 
     implementation(libs.pvot.design.system)
     implementation(libs.pvot.core.ui)
