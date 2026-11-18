@@ -147,6 +147,12 @@
     <string name="settings_glass_subtitle_blur">Frosted blur; this device can\'t draw the full lens effect</string>
     <string name="settings_glass_subtitle_flat">This device can\'t draw glass; bars stay solid</string>
     <string name="settings_glass_reduced">Reduced for battery saver right now</string>
+    <string name="settings_glass_solid">Solid</string>
+    <string name="settings_glass_frosted">Frosted</string>
+    <string name="settings_glass_light">Light</string>
+    <string name="settings_glass_medium">Medium</string>
+    <string name="settings_glass_rich">Rich</string>
+    <string name="settings_glass_full">Full</string>
     <string name="settings_section_open_with">Open with</string>
     <string name="settings_autosave_title">Save a copy automatically</string>
     <string name="settings_autosave_summary">When a document is opened from another app, keep a copy in Documents instead of asking each time</string>

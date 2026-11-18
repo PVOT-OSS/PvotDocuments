@@ -1,5 +1,6 @@
 package org.prauga.documents.settings
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -148,7 +149,7 @@ private fun GlassIntensityCard(preferences: AppPreferences, modifier: Modifier =
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = glassLabel(preferences.glassIntensity.coerceAtMost(max)),
+                        text = stringResource(glassLabelRes(preferences.glassIntensity.coerceAtMost(max))),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -182,11 +183,12 @@ private fun glassSubtitleRes(): Int = when {
 }
 
 /** The name of each stop of the glass slider, from the cheapest to the full effect. */
-private fun glassLabel(intensity: Float): String = when {
-    intensity <= PvotGlassDefaults.SolidIntensity -> "Solid"
-    intensity <= PvotGlassDefaults.FrostedIntensity + 0.02f -> "Frosted"
-    intensity <= 0.34f -> "Light"
-    intensity <= 0.67f -> "Medium"
-    intensity < 1f -> "Rich"
-    else -> "Full"
+@StringRes
+private fun glassLabelRes(intensity: Float): Int = when {
+    intensity <= PvotGlassDefaults.SolidIntensity -> R.string.settings_glass_solid
+    intensity <= PvotGlassDefaults.FrostedIntensity + 0.02f -> R.string.settings_glass_frosted
+    intensity <= 0.34f -> R.string.settings_glass_light
+    intensity <= 0.67f -> R.string.settings_glass_medium
+    intensity < 1f -> R.string.settings_glass_rich
+    else -> R.string.settings_glass_full
 }
