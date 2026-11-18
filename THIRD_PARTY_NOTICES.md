@@ -13,6 +13,12 @@ PDFium is reached through [PdfiumAndroidKt](https://github.com/johngray1965/Pdfi
 (`io.legere:pdfiumandroid`), Copyright 2015 Bekket McClane, 2016 Bartosz Schiller, 2023 John
 Gray, Apache License 2.0. The license text is in `LICENSES/Apache-2.0.txt`.
 
+## Hilt
+
+Dependency injection uses [Hilt](https://dagger.dev/hilt/) (`com.google.dagger:hilt-android`,
+`androidx.hilt`), Copyright The Dagger Authors and The Android Open Source Project, Apache License
+2.0. The license text is in `LICENSES/Apache-2.0.txt`.
+
 ## Tabler Icons
 
 The icons in `app/src/main/res/drawable/` (`ic_chevron_down.xml`, `ic_chevron_up.xml`,

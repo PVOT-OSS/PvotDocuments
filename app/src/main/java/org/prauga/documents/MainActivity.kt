@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import dagger.hilt.android.AndroidEntryPoint
 import com.prauga.pvot.designsystem.effects.ProvidePvotGlassIntensity
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
@@ -15,6 +16,7 @@ import org.prauga.documents.ui.AppShell
 import org.prauga.documents.ui.screens.IncomingDocumentHandler
 import org.prauga.documents.ui.screens.OnboardingScreen
 
+@AndroidEntryPoint
 class MainActivity : PvotBaseActivity() {
 
     // A property, not local state: onNewIntent runs outside composition and needs somewhere to

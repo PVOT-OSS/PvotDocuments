@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.core.net.toUri
+import dagger.hilt.android.AndroidEntryPoint
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
 import org.prauga.documents.util.ViewerFormat
@@ -14,6 +15,7 @@ import org.prauga.documents.util.ViewerFormat
  * and [ViewerFormat] the caller already resolved — this activity renders, it doesn't decide what
  * it's able to open.
  */
+@AndroidEntryPoint
 class DocumentViewerActivity : PvotBaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
