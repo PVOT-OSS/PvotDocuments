@@ -32,8 +32,8 @@ import com.prauga.pvot.designsystem.components.PvotDialog
 import com.prauga.pvot.designsystem.components.PvotDialogAction
 import com.prauga.pvot.designsystem.components.PvotDialogActionStyle
 import com.prauga.pvot.designsystem.components.PvotSheetItem
-import com.prauga.pvot.designsystem.components.pvotGlassSurface
 import com.prauga.pvot.designsystem.components.list.PvotSwitchRow
+import com.prauga.pvot.designsystem.components.pvotGlassSurface
 import com.prauga.pvot.designsystem.components.textfield.PvotTextField
 import com.prauga.pvot.designsystem.effects.LocalPvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.PvotGlassDefaults

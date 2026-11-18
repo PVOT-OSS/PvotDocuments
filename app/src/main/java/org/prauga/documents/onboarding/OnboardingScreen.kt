@@ -33,8 +33,6 @@ import com.prauga.pvot.designsystem.components.button.PvotButtonStyle
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 
-
-
 /**
  * Shown once, before [org.prauga.documents.home.AppShell]: lets the user grant Documents and
  * Downloads up front, so Manage already has them instead of starting empty. There is no API to

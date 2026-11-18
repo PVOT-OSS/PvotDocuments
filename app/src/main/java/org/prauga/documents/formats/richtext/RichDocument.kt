@@ -2,10 +2,10 @@ package org.prauga.documents.formats.richtext
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import timber.log.Timber
 import java.io.Closeable
 import java.io.File
 import java.util.zip.ZipFile
-import timber.log.Timber
 
 /**
  * A parsed word-processor document, and the package it came from — kept open while it's viewed
