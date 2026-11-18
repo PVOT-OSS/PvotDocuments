@@ -46,7 +46,11 @@ import org.prauga.documents.R
  * to confirm rather than a folder hunt. Continuing is always allowed; neither folder is required.
  */
 @Composable
-fun OnboardingScreen(preferences: AppPreferences, modifier: Modifier = Modifier) {
+fun OnboardingScreen(
+    preferences: AppPreferences,
+    onContinue: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -95,7 +99,7 @@ fun OnboardingScreen(preferences: AppPreferences, modifier: Modifier = Modifier)
         item {
             PvotButton(
                 text = stringResource(R.string.onboarding_continue),
-                onClick = preferences::completeOnboarding,
+                onClick = onContinue,
                 modifier = Modifier.fillMaxWidth()
             )
         }

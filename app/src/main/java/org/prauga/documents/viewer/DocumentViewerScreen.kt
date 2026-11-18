@@ -31,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
@@ -87,7 +89,8 @@ fun DocumentViewerScreen(
     uri: Uri,
     name: String,
     format: ViewerFormat,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    viewModel: DocumentViewerViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val preferences = remember { AppPreferences(context) }
@@ -106,12 +109,14 @@ fun DocumentViewerScreen(
     val readingKey by produceState<String?>(null, uri, name) {
         value = withContext(Dispatchers.IO) { readingKey(context, uri, name) }
     }
-    val pdfReading = remember(readingKey, preferences.darkPdfPages) {
+    val darkPdfPages by viewModel.darkPdfPages.collectAsStateWithLifecycle()
+    val pdfReading = remember(readingKey, darkPdfPages) {
         val key = readingKey ?: return@remember null
+        val dark = darkPdfPages ?: return@remember null
         PdfReadingSettings(
             initialPosition = preferences.readingPosition(key),
             onPositionChange = { preferences.saveReadingPosition(key, it) },
-            pageFilter = if (preferences.darkPdfPages) DarkPageFilter else null,
+            pageFilter = if (dark) DarkPageFilter else null,
         )
     }
     var showGoToPage by remember { mutableStateOf(false) }
@@ -121,8 +126,8 @@ fun DocumentViewerScreen(
     if (showContents) PdfContentsSheet(pdfNavigation, onDismiss = { showContents = false })
     if (showOptions) {
         PdfViewOptionsSheet(
-            darkPages = preferences.darkPdfPages,
-            onDarkPagesChange = preferences::updateDarkPdfPages,
+            darkPages = darkPdfPages == true,
+            onDarkPagesChange = { viewModel.onEvent(DocumentViewerEvent.DarkPdfPages(it)) },
             onPages = { pdfNavigation.overviewOpen = true },
             onGoToPage = { showGoToPage = true },
             onDismiss = { showOptions = false },

@@ -62,7 +62,7 @@ private val Tabs = listOf(
  * each screen scrolling under both.
  */
 @Composable
-fun AppShell(preferences: AppPreferences) {
+fun AppShell(preferences: AppPreferences, gridView: Boolean) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var navCompact by rememberSaveable { mutableStateOf(false) }
     // Swiping up through a list shrinks the nav bar out of the way; swiping back down restores it.
@@ -115,8 +115,8 @@ fun AppShell(preferences: AppPreferences) {
         when (selectedTab) {
             0 -> RecentScreen(preferences, listState, topPadding, showMessage, screenModifier)
             1 -> ToolsScreen(listState, topPadding, screenModifier)
-            2 -> ManageScreen(preferences, listState, topPadding, showMessage, screenModifier)
-            else -> SettingsScreen(preferences, listState, topPadding, screenModifier)
+            2 -> ManageScreen(preferences, gridView, listState, topPadding, showMessage, screenModifier)
+            else -> SettingsScreen(listState, topPadding, screenModifier)
         }
     }
 }

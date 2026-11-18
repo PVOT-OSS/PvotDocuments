@@ -77,6 +77,7 @@ import org.prauga.documents.library.data.TrashedDocument
 @Composable
 fun ManageScreen(
     preferences: AppPreferences,
+    gridView: Boolean,
     state: LazyListState,
     topPadding: Dp,
     onUnsupported: (String) -> Unit,
@@ -443,7 +444,7 @@ fun ManageScreen(
             }
         }
         if (visibleDocuments.isNotEmpty()) {
-            if (preferences.gridView) {
+            if (gridView) {
                 item {
                     FlowRow(
                         modifier = Modifier.fillMaxWidth().pvotReveal(3),

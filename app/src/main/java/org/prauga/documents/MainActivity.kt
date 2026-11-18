@@ -4,9 +4,12 @@ import android.content.ContentResolver
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.effects.ProvidePvotGlassIntensity
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
@@ -22,24 +25,31 @@ class MainActivity : PvotBaseActivity() {
     // A property, not local state: onNewIntent runs outside composition and needs somewhere to
     // put the next URI that the Compose tree is already observing.
     private var incomingUri by mutableStateOf<Uri?>(null)
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val preferences = AppPreferences(applicationContext)
         incomingUri = incomingDocumentUri(intent)
         setPvotContent {
-            PvotAppTheme(dynamicColor = preferences.dynamicColor) {
-                // The preference, held to the device: solid under battery saver.
-                ProvidePvotGlassIntensity(preferences.glassIntensity) {
-                    if (preferences.onboardingComplete) {
-                        AppShell(preferences)
+            val uiState by viewModel.state.collectAsStateWithLifecycle()
+            val settings = (uiState as? UiState.Success)?.data ?: return@setPvotContent
+            PvotAppTheme(dynamicColor = settings.dynamicColor) {
+                ProvidePvotGlassIntensity(settings.glassIntensity) {
+                    if (settings.onboardingComplete) {
+                        AppShell(preferences, gridView = settings.gridView)
                     } else {
-                        OnboardingScreen(preferences)
+                        OnboardingScreen(
+                            preferences = preferences,
+                            onContinue = { viewModel.onEvent(MainEvent.CompleteOnboarding) }
+                        )
                     }
                     incomingUri?.let { uri ->
                         IncomingDocumentHandler(
                             uri = uri,
                             preferences = preferences,
+                            autosave = settings.autosaveOpenedDocuments,
+                            onAutosaveChosen = { viewModel.onEvent(MainEvent.AutosaveOpenedDocuments(it)) },
                             onHandled = { incomingUri = null }
                         )
                     }

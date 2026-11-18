@@ -14,7 +14,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.coreui.PvotSectionHeader
+import com.prauga.pvot.coreui.UiState
 import com.prauga.pvot.designsystem.components.PvotScreen
 import com.prauga.pvot.designsystem.components.PvotScreenDefaults
 import com.prauga.pvot.designsystem.components.list.PvotListGroup
@@ -25,9 +28,9 @@ import com.prauga.pvot.designsystem.effects.PvotGlassDefaults
 import com.prauga.pvot.designsystem.effects.PvotGlassIntensity
 import com.prauga.pvot.designsystem.motion.pvotReveal
 import com.prauga.pvot.designsystem.theme.PvotSpacing
-import org.prauga.documents.AppPreferences
 import org.prauga.documents.BuildConfig
 import org.prauga.documents.R
+import org.prauga.documents.settings.data.AppSettings
 
 /**
  * Appearance and about. The glass slider and view mode are real; everything else earns its place
@@ -35,10 +38,23 @@ import org.prauga.documents.R
  */
 @Composable
 fun SettingsScreen(
-    preferences: AppPreferences,
     state: LazyListState,
     topPadding: Dp,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.state.collectAsStateWithLifecycle()
+    val settings = (uiState as? UiState.Success)?.data ?: return
+    SettingsContent(settings, viewModel::onEvent, state, topPadding, modifier)
+}
+
+@Composable
+private fun SettingsContent(
+    settings: AppSettings,
+    onEvent: (SettingsEvent) -> Unit,
+    state: LazyListState,
+    topPadding: Dp,
+    modifier: Modifier,
 ) {
     PvotScreen(
         modifier = modifier,
@@ -59,22 +75,26 @@ fun SettingsScreen(
                     PvotSwitchRow(
                         title = stringResource(R.string.settings_grid_title),
                         summary = stringResource(R.string.settings_grid_summary),
-                        checked = preferences.gridView,
-                        onCheckedChange = preferences::updateGridView
+                        checked = settings.gridView,
+                        onCheckedChange = { onEvent(SettingsEvent.GridView(it)) }
                     )
                 }
                 item {
                     PvotSwitchRow(
                         title = stringResource(R.string.settings_dynamic_color_title),
                         summary = stringResource(R.string.settings_dynamic_color_summary),
-                        checked = preferences.dynamicColor,
-                        onCheckedChange = preferences::updateDynamicColor
+                        checked = settings.dynamicColor,
+                        onCheckedChange = { onEvent(SettingsEvent.DynamicColor(it)) }
                     )
                 }
             }
         }
         item {
-            GlassIntensityCard(preferences, Modifier.fillMaxWidth().pvotReveal(2))
+            GlassIntensityCard(
+                intensity = settings.glassIntensity,
+                onIntensityChange = { onEvent(SettingsEvent.GlassIntensity(it)) },
+                modifier = Modifier.fillMaxWidth().pvotReveal(2)
+            )
         }
         item {
             PvotSectionHeader(
@@ -92,8 +112,8 @@ fun SettingsScreen(
                         summary = stringResource(R.string.settings_autosave_summary),
                         // A document opened before this is ever shown defaults to the common
                         // choice; the switch pins it explicitly the first time it's touched.
-                        checked = preferences.autosaveOpenedDocuments ?: true,
-                        onCheckedChange = preferences::setAutosaveOpenedDocuments
+                        checked = settings.autosaveOpenedDocuments ?: true,
+                        onCheckedChange = { onEvent(SettingsEvent.AutosaveOpenedDocuments(it)) }
                     )
                 }
             }
@@ -126,7 +146,11 @@ fun SettingsScreen(
  * [PvotGlassDefaults.maxIntensity]: the device's own cap, which is 0 wherever it cannot blur.
  */
 @Composable
-private fun GlassIntensityCard(preferences: AppPreferences, modifier: Modifier = Modifier) {
+private fun GlassIntensityCard(
+    intensity: Float,
+    onIntensityChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val max = PvotGlassDefaults.maxIntensity()
     PvotListGroup(
         modifier = modifier,
@@ -149,15 +173,15 @@ private fun GlassIntensityCard(preferences: AppPreferences, modifier: Modifier =
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = stringResource(glassLabelRes(preferences.glassIntensity.coerceAtMost(max))),
+                        text = stringResource(glassLabelRes(intensity.coerceAtMost(max))),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
                 if (max > 0f) {
                     PvotSlider(
-                        value = preferences.glassIntensity.coerceAtMost(max),
-                        onValueChange = preferences::updateGlassIntensity,
+                        value = intensity.coerceAtMost(max),
+                        onValueChange = onIntensityChange,
                         valueRange = 0f..max,
                         modifier = Modifier.padding(top = PvotSpacing.S)
                     )

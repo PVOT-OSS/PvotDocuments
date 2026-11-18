@@ -6,11 +6,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
-import com.prauga.pvot.designsystem.effects.PvotGlassDefaults
 import org.json.JSONArray
 import org.json.JSONObject
 import org.prauga.documents.common.isOwnFile
@@ -24,39 +22,6 @@ class AppPreferences(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-
-    /**
-     * The app's glass preference, 0 to 1. Held to what the device can draw through
-     * [com.prauga.pvot.designsystem.effects.ProvidePvotGlassIntensity], which falls back to solid
-     * under battery saver.
-     */
-    var glassIntensity by mutableFloatStateOf(
-        prefs.getFloat(KEY_GLASS_INTENSITY, PvotGlassDefaults.defaultIntensity())
-    )
-        private set
-
-    fun updateGlassIntensity(intensity: Float) {
-        prefs.edit { putFloat(KEY_GLASS_INTENSITY, intensity) }
-        glassIntensity = intensity
-    }
-
-    /** Material You colors from the system wallpaper, where the device supports them. */
-    var dynamicColor by mutableStateOf(prefs.getBoolean(KEY_DYNAMIC_COLOR, false))
-        private set
-
-    fun updateDynamicColor(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_DYNAMIC_COLOR, enabled) }
-        dynamicColor = enabled
-    }
-
-    /** Grid instead of a list on the Manage tab. */
-    var gridView by mutableStateOf(prefs.getBoolean(KEY_GRID_VIEW, false))
-        private set
-
-    fun updateGridView(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_GRID_VIEW, enabled) }
-        gridView = enabled
-    }
 
     /**
      * Folders the user added through the system picker, as persisted tree URIs. The app holds a
@@ -81,31 +46,6 @@ class AppPreferences(context: Context) {
         val updated = folderUris - treeUri.toString()
         prefs.edit { putStringSet(KEY_FOLDERS, updated) }
         folderUris = updated
-    }
-
-    /** Whether the user has been through [org.prauga.documents.onboarding.OnboardingScreen]. */
-    var onboardingComplete by mutableStateOf(prefs.getBoolean(KEY_ONBOARDING_COMPLETE, false))
-        private set
-
-    fun completeOnboarding() {
-        prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETE, true) }
-        onboardingComplete = true
-    }
-
-    /**
-     * Whether a document opened from another app is copied into Documents' own storage: null
-     * until the user has been asked once, through the prompt in
-     * [org.prauga.documents.incoming.IncomingDocumentHandler]. Changeable afterward from
-     * Settings.
-     */
-    var autosaveOpenedDocuments by mutableStateOf(
-        if (prefs.contains(KEY_AUTOSAVE)) prefs.getBoolean(KEY_AUTOSAVE, true) else null
-    )
-        private set
-
-    fun setAutosaveOpenedDocuments(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_AUTOSAVE, enabled) }
-        autosaveOpenedDocuments = enabled
     }
 
     /**
@@ -172,15 +112,6 @@ class AppPreferences(context: Context) {
         trashedDocuments = updated
     }
 
-    /** Whether PDF pages are drawn dark (colors inverted, hues kept) for reading at night. */
-    var darkPdfPages by mutableStateOf(prefs.getBoolean(KEY_DARK_PDF_PAGES, false))
-        private set
-
-    fun updateDarkPdfPages(enabled: Boolean) {
-        prefs.edit { putBoolean(KEY_DARK_PDF_PAGES, enabled) }
-        darkPdfPages = enabled
-    }
-
     /** Where reading stopped in the document [key] names (see `readingKey` in the viewer), if
      * it has been opened before. */
     fun readingPosition(key: String): ReadingPosition? {
@@ -203,15 +134,9 @@ class AppPreferences(context: Context) {
 
     private companion object {
         const val PREFS_NAME = "documents_preferences"
-        const val KEY_GLASS_INTENSITY = "glass_intensity"
-        const val KEY_DYNAMIC_COLOR = "dynamic_color"
-        const val KEY_GRID_VIEW = "grid_view"
         const val KEY_FOLDERS = "folder_uris"
-        const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
-        const val KEY_AUTOSAVE = "autosave_opened_documents"
         const val KEY_RECENT = "recent_documents"
         const val KEY_TRASH = "trashed_documents"
-        const val KEY_DARK_PDF_PAGES = "dark_pdf_pages"
         const val KEY_READING_POSITIONS = "reading_positions"
         const val MaxReadingPositions = 100
 

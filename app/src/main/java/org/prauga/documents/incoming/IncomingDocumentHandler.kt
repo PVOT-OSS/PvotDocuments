@@ -27,7 +27,13 @@ import org.prauga.documents.viewer.DocumentViewerActivity
  * document the app can't read isn't recorded.
  */
 @Composable
-fun IncomingDocumentHandler(uri: Uri, preferences: AppPreferences, onHandled: () -> Unit) {
+fun IncomingDocumentHandler(
+    uri: Uri,
+    preferences: AppPreferences,
+    autosave: Boolean?,
+    onAutosaveChosen: (Boolean) -> Unit,
+    onHandled: () -> Unit,
+) {
     val context = LocalContext.current
     val repository = remember { DocumentsRepository(context) }
     val defaultName = stringResource(R.string.incoming_default_name)
@@ -40,12 +46,10 @@ fun IncomingDocumentHandler(uri: Uri, preferences: AppPreferences, onHandled: ()
     }
 
     val resolvedName = name ?: return
-    val autosave = preferences.autosaveOpenedDocuments
-
     if (autosave == null) {
         AutosavePromptDialog(
             documentName = resolvedName,
-            onChoose = preferences::setAutosaveOpenedDocuments
+            onChoose = onAutosaveChosen
         )
         return
     }
