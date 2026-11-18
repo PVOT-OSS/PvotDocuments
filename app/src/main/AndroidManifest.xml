@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- No permissions yet. Documents are reached through the Storage Access Framework, which
-         grants access per folder or file without a storage permission. -->
 
     <application
         android:name=".DocumentsApplication"
@@ -21,7 +19,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <!-- "Open with Documents" on a file, from Files, a browser download, or another app. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -38,7 +35,6 @@
                 <data android:mimeType="application/json" />
                 <data android:mimeType="application/xml" />
             </intent-filter>
-            <!-- "Share to Documents" from a messaging or mail app. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -57,20 +53,14 @@
             </intent-filter>
         </activity>
 
-        <!-- Opens one document, chosen from Recent or Manage; see DocumentViewerActivity.start(). -->
-        <!-- adjustResize: the PDF search bar rides on the keyboard through its insets; the
-             default pan would shove the whole viewer, top bar included, up off the screen.
-             configChanges: rotating or resizing re-lays out the open document in place instead
-             of restarting the activity, which would reopen it and lose the search, selection,
-             zoom and an encrypted PDF's password. Compose follows the new size by itself. -->
+        <!-- configChanges keeps search, selection, zoom and a PDF's password across a rotation;
+             adjustResize lets the PDF search bar ride the keyboard instead of panning the viewer. -->
         <activity
             android:name=".viewer.DocumentViewerActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|navigation"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
 
-        <!-- Shares the app's own copies of opened documents (see res/xml/file_paths.xml) without
-             exposing the rest of app storage. -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
