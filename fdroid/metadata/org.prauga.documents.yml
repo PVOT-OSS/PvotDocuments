@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 Saalim Quadri <danascape@gmail.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+PackageName: org.prauga.documents
+Name: Documents
+Summary: Read PDF, Office, EPUB and any other file offline
+License: GPL-3.0-or-later
+AuthorName: PVOT-OSS
+SourceCode: https://github.com/PVOT-OSS/Pvot-Documents
+IssueTracker: https://github.com/PVOT-OSS/Pvot-Documents/issues
+WebSite: ""
+Categories:
+  - Reading
+Description: |
+  Documents is one private place to open and organize the documents on your
+  phone: PDF (with search, selection, contents and password-protected files),
+  Word and OpenDocument text, Excel and OpenDocument spreadsheets, PowerPoint
+  and OpenDocument presentations, EPUB books, CSV, Markdown, HTML, JSON and
+  plain text. Any other file opens as text or as its raw bytes. Add folders
+  with Android's own picker; search, sort, share, rename and restore from
+  Recently deleted. No internet permission, no storage permission, no ads and
+  no tracking.
+
+RepoType: git
+Repo: https://github.com/PVOT-OSS/Pvot-Documents.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 10000
+    commit: v1.0.0
+    subdir: app
+    submodules: true
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: "1.0.0"
+CurrentVersionCode: 10000
