@@ -32,7 +32,6 @@ import org.prauga.documents.R
 import org.prauga.documents.manage.ManageScreen
 import org.prauga.documents.recent.RecentScreen
 import org.prauga.documents.settings.SettingsScreen
-import org.prauga.documents.tools.ToolsScreen
 
 /** Pixels of scroll in one event before the nav bar reacts, so a jitter doesn't flip it. */
 private const val ScrollThreshold = 4f
@@ -42,11 +41,6 @@ private val Tabs = listOf(
         iconRes = R.drawable.ic_recent,
         labelRes = R.string.tab_recent,
         contentDescriptionRes = R.string.cd_recent
-    ),
-    PvotTabItem(
-        iconRes = R.drawable.ic_tools,
-        labelRes = R.string.tab_tools,
-        contentDescriptionRes = R.string.cd_tools
     ),
     PvotTabItem(
         iconRes = R.drawable.ic_folder,
@@ -112,8 +106,7 @@ fun AppShell() {
 
         when (selectedTab) {
             0 -> RecentScreen(listState, topPadding, showMessage, screenModifier)
-            1 -> ToolsScreen(listState, topPadding, screenModifier)
-            2 -> ManageScreen(listState, topPadding, showMessage, screenModifier)
+            1 -> ManageScreen(listState, topPadding, showMessage, screenModifier)
             else -> SettingsScreen(listState, topPadding, screenModifier)
         }
     }

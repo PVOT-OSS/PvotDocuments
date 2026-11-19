@@ -32,11 +32,11 @@ import com.prauga.pvot.designsystem.motion.pvotReveal
 import com.prauga.pvot.designsystem.theme.PvotSpacing
 import org.prauga.documents.R
 import org.prauga.documents.common.DocumentEffects
+import org.prauga.documents.common.EmptyTab
 import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
-import org.prauga.documents.tools.EmptyTab
 
-/** [onMessage] reports a document with no viewer for its format. */
+/** [onMessage] says when a recent document can no longer be read. */
 @Composable
 fun RecentScreen(
     state: LazyListState,

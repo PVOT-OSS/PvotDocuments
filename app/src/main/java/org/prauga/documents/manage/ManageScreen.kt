@@ -67,7 +67,7 @@ import org.prauga.documents.common.documentKind
 import org.prauga.documents.common.formatFileSize
 import org.prauga.documents.library.data.ManagedDocument
 
-/** [onMessage] reports a document with no viewer, and the outcome of other actions. */
+/** [onMessage] shows the outcome of an action, such as a failed rename. */
 @Composable
 fun ManageScreen(
     state: LazyListState,
@@ -84,14 +84,13 @@ fun ManageScreen(
     }
     val uiState by viewModel.state.collectAsStateWithLifecycle()
     val manage = (uiState as? UiState.Success)?.data ?: return
-    ManageContent(manage, viewModel::onEvent, onMessage, state, topPadding, modifier)
+    ManageContent(manage, viewModel::onEvent, state, topPadding, modifier)
 }
 
 @Composable
 private fun ManageContent(
     manage: ManageUiState,
     onEvent: (ManageEvent) -> Unit,
-    onMessage: (String) -> Unit,
     state: LazyListState,
     topPadding: Dp,
     modifier: Modifier,
@@ -102,7 +101,6 @@ private fun ManageContent(
     var searchQuery by rememberSaveable { mutableStateOf(manage.searchQuery) }
     var showNewSheet by remember { mutableStateOf(false) }
     var creatingType by remember { mutableStateOf<NewFileType?>(null) }
-    val scanUnsupportedMessage = stringResource(R.string.manage_scan_unsupported)
     val untitledName = stringResource(R.string.manage_new_untitled)
     val folders = manage.folders
     val documents = manage.documents
@@ -169,8 +167,7 @@ private fun ManageContent(
     if (showNewSheet) {
         NewDocumentSheet(
             onDismiss = { showNewSheet = false },
-            onPickType = { type -> creatingType = type },
-            onScan = { onMessage(scanUnsupportedMessage) }
+            onPickType = { type -> creatingType = type }
         )
     }
 
@@ -467,8 +464,7 @@ private fun ManageContent(
 @Composable
 private fun NewDocumentSheet(
     onDismiss: () -> Unit,
-    onPickType: (NewFileType) -> Unit,
-    onScan: () -> Unit
+    onPickType: (NewFileType) -> Unit
 ) {
     PvotBottomSheet(
         visible = true,
@@ -487,11 +483,6 @@ private fun NewDocumentSheet(
                 onClick = { onDismiss(); onPickType(type) }
             )
         }
-        PvotSheetItem(
-            title = stringResource(R.string.manage_new_scan),
-            icon = { Icon(painterResource(R.drawable.ic_camera), contentDescription = null) },
-            onClick = { onDismiss(); onScan() }
-        )
     }
 }
 
