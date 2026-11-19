@@ -1,0 +1,4 @@
+First release.
+• View PDF (search, selection, contents, password-protected files, dark pages), Word, OpenDocument, Excel, PowerPoint, EPUB, CSV, Markdown, HTML, JSON and text
+• Any other file opens as text or raw bytes, or in another app
+• Folders, Recent with type filters, search, sort, grid view, share, rename and Recently deleted
