@@ -547,6 +547,7 @@ private fun DocumentGridCard(
             Text(
                 text = document.name,
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
