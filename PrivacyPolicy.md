@@ -1,6 +1,6 @@
 # Privacy Policy — Pvot Documents
 
-_Effective 18 November 2026_
+_Effective 20 November 2026, from version 1.0.0_
 
 Pvot Documents (package `org.prauga.documents`) is a document reader and organizer published by
 PVOT-OSS. This policy explains what the app does with your data.
@@ -12,8 +12,8 @@ permission, so nothing you open in it leaves your phone.**
 
 - **Folders you add.** You pick each folder in Android's own folder picker, and the app keeps
   access to that folder only, until you remove it. It asks for no storage permission.
-- **Documents you open from another app** with "Open with" or "Share". The app reads the document
-  it was handed and nothing else.
+- **Documents you open from another app** with "Open with" or "Share", of any file type. The app
+  reads the document it was handed and nothing else.
 
 ## What the app stores, on your phone only
 
@@ -25,6 +25,11 @@ permission, so nothing you open in it leaves your phone.**
   PDF, the folders you added and your settings.
 
 Uninstalling the app removes all of it.
+
+## What the app passes on
+
+Only what you ask for: when you share a document or choose "Open in another app", Android hands
+that one document to the app you pick. Nothing is sent anywhere else.
 
 ## Permissions
 
