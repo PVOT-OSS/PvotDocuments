@@ -44,7 +44,8 @@ if it has to be app-local for now, keep it small and list it under "Open items".
 - **No network.** The app does not ask for `INTERNET`. Any AI feature is on-device and comes last.
 - **Office formats are view-only** in v1, through small parsers of our own rather than a bundled
   office suite.
-- **Nav follows OnePlus Docs' shape**: four tabs, Recent / Tools / Manage / Settings.
+- **Nav follows OnePlus Docs' shape**: four tabs, Recent / Tools / Manage / Settings. Tools and the
+  "+" sheet's scan entry are hidden in 1.0.0 until they have something to offer.
   Recent is one list with type filter chips (All, Scanned, DOC, XLS, ...), not separate tabs per
   type. Tools is a hub of cards (scan, convert, later AI). Manage holds folders ("Sources"),
   "Created by me", and later Recently deleted / Private Safe. A floating "+" for new/scan is not
@@ -93,7 +94,7 @@ app/src/main/java/org/prauga/documents/
   DocumentsApplication.kt, MainActivity.kt, MainViewModel.kt
   common/                 shared types, effects (open viewer, share, message), coroutines, preferences file
   settings/  library/data/  repositories: settings, folders/recents/trash, SAF documents
-  home/ recent/ manage/ onboarding/ incoming/ tools/   screens with their ViewModels
+  home/ recent/ manage/ onboarding/ incoming/   screens with their ViewModels
   viewer/                 DocumentViewerActivity/Screen/ViewModel; data/ loads documents, reading positions
   viewer/pdf/             PdfView (scroll, zoom, search, selection), PdfiumDocument (one serial dispatcher)
   viewer/sheet|slides|richtext|text/   the other viewers, given already-loaded content

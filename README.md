@@ -4,24 +4,25 @@ A documents app that you need but is not provided to you: one private, offline p
 organize and work with the documents on your phone. Built on the
 [Pvot design system](https://github.com/PVOT-OSS/PvotLib).
 
-> **Status:** early. It opens PDF, Word, OpenDocument text, spreadsheets, slides and plain-text
-> files, all view-only. Editing, the PDF tools and the scanner are not built yet.
+> **Version 1.0.0.** It opens PDF, Word, OpenDocument, Excel, PowerPoint, EPUB, CSV, Markdown,
+> HTML, JSON and text, all view-only; any other file opens as text or raw bytes, or in another app.
+> Editing, the PDF tools, archives and the scanner are not built yet.
 
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/pdf.png" alt="PDF reader with a field guide open" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" alt="Recent, with filters by type" width="220">
   &nbsp;
-  <img src="docs/screenshots/pdf-search.png" alt="Searching a PDF, with every match highlighted" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" alt="Searching a PDF, with every match highlighted" width="220">
   &nbsp;
-  <img src="docs/screenshots/slides.png" alt="A PowerPoint deck drawn as laid out" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" alt="A Word report with headings, a list and a table" width="220">
 </p>
 <p align="center">
-  <img src="docs/screenshots/spreadsheet.png" alt="An Excel budget with fills, number formats and frozen headers" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" alt="An Excel budget with fills and number formats" width="220">
   &nbsp;
-  <img src="docs/screenshots/word.png" alt="A Word document with headings and a picture" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" alt="A PowerPoint deck drawn as laid out" width="220">
   &nbsp;
-  <img src="docs/screenshots/manage.png" alt="Manage tab: allowed folders, search, sort and the file list" width="220" height="481">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" alt="An EPUB book" width="220">
 </p>
 
 ## Roadmap
@@ -31,7 +32,7 @@ organize and work with the documents on your phone. Built on the
 | 0. Scaffold | Project, PvotLib, app shell with Recent, Tools, Manage and Settings, CI |
 | 1. Library | Folders through the system picker, "Open with" (with an autosave-or-not choice), recents with type filters, search, sort, list and grid, multi-select, share, rename, delete to Recently deleted, new file / scan from Tools |
 | 2. Core viewers | PDF (zoom, thumbnails, search, go to page, night mode, resume), text, code, Markdown, CSV, HTML, JSON, DOCX |
-| 3. Office formats | XLSX/ODS sheets, PPTX/ODP slides, ODT, possibly EPUB |
+| 3. Office formats | XLSX/ODS sheets, PPTX/ODP slides, ODT, EPUB, and any other file as text or bytes |
 | 4. Editing and PDF tools | Edit text, Markdown and CSV; PDF markup and signatures; merge, split, reorder, rotate, images to PDF, compress, password |
 | 5. Scanner | Camera capture, edge detection, perspective correction, filters, multi-page PDF, OCR |
 | 6. Later | On-device AI, tablet two-pane layout, widgets, printing, F-Droid |
