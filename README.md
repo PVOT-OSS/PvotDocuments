@@ -57,6 +57,13 @@ git clone --recurse-submodules https://github.com/PVOT-OSS/Pvot-Documents.git
 
 Requires JDK 21 and the Android SDK (compile SDK 37.1). Min SDK is 27.
 
+## Versioning
+
+Releases follow [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`, set in the root
+`build.gradle.kts`. The version code is `MAJOR * 10000 + MINOR * 100 + PATCH` (1.0.0 is 10000), so
+minor and patch numbers stay below 100. Each release gets a tag `vMAJOR.MINOR.PATCH` and a changelog
+in `fastlane/metadata/android/en-US/changelogs/<version code>.txt`.
+
 ## Credits
 
 Third-party notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
